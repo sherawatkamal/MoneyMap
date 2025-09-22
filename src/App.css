@@ -47,6 +47,39 @@ body {
   padding: 2rem;
 }
 
+/* Top Nav */
+.top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.top-nav .brand {
+  font-weight: 800;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.top-nav nav {
+  display: flex;
+  gap: 1rem;
+}
+
+.top-nav a {
+  text-decoration: none;
+  color: #374151;
+}
+
+.top-nav .btn-link {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  color: #2563eb;
+}
+
 /* Form Container */
 .form-container {
   background: white;
@@ -181,6 +214,90 @@ body {
 .btn-primary:disabled {
   background: #9ca3af;
   cursor: not-allowed;
+}
+
+/* Auth Pages */
+.auth-page {
+  min-height: calc(100vh - 56px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.auth-card-header {
+  padding: 2rem 2rem 0.5rem;
+  text-align: center;
+}
+
+.auth-card-header h1 {
+  font-size: 1.75rem;
+  color: #111827;
+}
+
+.auth-card-subtitle {
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+
+.auth-card-body {
+  padding: 1.5rem 2rem 2rem;
+}
+
+.auth-form label {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.auth-form label span {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #374151;
+  font-weight: 600;
+}
+
+.auth-form input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 1rem;
+}
+
+.auth-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.auth-actions .remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #4b5563;
+}
+
+.auth-page .btn-primary {
+  margin-top: 0.5rem;
+}
+
+.auth-switch {
+  text-align: center;
+  color: #6b7280;
+}
+
+.auth-card-footer {
+  padding: 1rem 2rem 2rem;
 }
 
 .btn-secondary {

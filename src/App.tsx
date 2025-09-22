@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import './App.css';
+import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
 
-// Simple types
+// Simple types (kept to preserve existing planner)
 interface FinancialData {
   currentSavings: number;
   monthlyIncome: number;
@@ -24,7 +27,6 @@ const FinancialForm: React.FC<{
     <div className="form-container">
       <h2>Financial Foundation</h2>
       <p>Enter your basic financial information</p>
-      
       <div className="form-group">
         <label>Current Savings ($)</label>
         <input
@@ -34,7 +36,6 @@ const FinancialForm: React.FC<{
           placeholder="Enter your current savings"
         />
       </div>
-
       <div className="form-group">
         <label>Monthly Income ($)</label>
         <input
@@ -44,7 +45,6 @@ const FinancialForm: React.FC<{
           placeholder="Enter your monthly income"
         />
       </div>
-
       <div className="form-group">
         <label>Monthly Expenses ($)</label>
         <input
@@ -54,15 +54,13 @@ const FinancialForm: React.FC<{
           placeholder="Enter your monthly expenses"
         />
       </div>
-
       <div className="summary">
         <h3>Summary</h3>
         <p>Monthly Surplus: ${(data.monthlyIncome - data.monthlyExpenses).toLocaleString()}</p>
         <p>Available for Investment: ${data.currentSavings.toLocaleString()}</p>
       </div>
-
-      <button 
-        onClick={onNext} 
+      <button
+        onClick={onNext}
         disabled={!isFormValid}
         className={isFormValid ? 'btn-primary' : 'btn-disabled'}
       >
@@ -84,46 +82,36 @@ const Recommendations: React.FC<{
   return (
     <div className="recommendations-container">
       <h2>Your Financial Recommendations</h2>
-      
       <div className="recommendation-card">
         <h3>Emergency Fund</h3>
         <p className="amount">${emergencyFund.toLocaleString()}</p>
         <p>Keep 6 months of expenses in a high-yield savings account</p>
       </div>
-
       <div className="recommendation-card">
         <h3>Available for Investment</h3>
         <p className="amount">${Math.max(0, availableForInvestment).toLocaleString()}</p>
         <p>Invest in a diversified portfolio based on your risk tolerance</p>
       </div>
-
       <div className="recommendation-card">
         <h3>Monthly Investment</h3>
         <p className="amount">${Math.max(0, monthlySurplus).toLocaleString()}</p>
         <p>Consider investing your monthly surplus for long-term growth</p>
       </div>
-
       <div className="actions">
-        <button onClick={onBack} className="btn-secondary">
-          Back to Form
-        </button>
-        <button className="btn-primary">
-          Export Plan
-        </button>
+        <button onClick={onBack} className="btn-secondary">Back to Form</button>
+        <button className="btn-primary">Export Plan</button>
       </div>
     </div>
   );
 };
 
-// Main App Component
-function App() {
+function PlannerApp() {
   const [currentStep, setCurrentStep] = useState(0);
   const [financialData, setFinancialData] = useState<FinancialData>({
     currentSavings: 0,
     monthlyIncome: 0,
     monthlyExpenses: 0,
   });
-
   const nextStep = () => setCurrentStep(1);
   const prevStep = () => setCurrentStep(0);
 
@@ -133,22 +121,35 @@ function App() {
         <h1>MoneyMap</h1>
         <p>Simple Financial Planning</p>
       </header>
-
       <main className="main">
         {currentStep === 0 ? (
-          <FinancialForm 
-            data={financialData} 
-            setData={setFinancialData} 
-            onNext={nextStep} 
-          />
+          <FinancialForm data={financialData} setData={setFinancialData} onNext={nextStep} />
         ) : (
-          <Recommendations 
-            data={financialData} 
-            onBack={prevStep} 
-          />
+          <Recommendations data={financialData} onBack={prevStep} />
         )}
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <div className="top-nav">
+        <Link to="/login" className="brand">MoneyMap</Link>
+        <nav>
+          <Link to="/login">Login</Link>
+          <Link to="/signup" className="btn-link">Sign up</Link>
+          <Link to="/planner">Planner</Link>
+        </nav>
+      </div>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/planner" element={<PlannerApp />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

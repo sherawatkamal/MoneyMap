@@ -3,7 +3,7 @@
 This repo is structured as a simple two-package workspace:
 
 - `client/`: Vite + React TypeScript frontend (moved from original root)
-- `server/`: Express + TypeScript backend with a basic `/api/health` route
+- `server/`: Flask Python backend with a basic `/api/health` route
 
 ## Development
 
@@ -17,16 +17,14 @@ npm run dev
 
 # Server
 cd ../server
-npm install
-npm run dev
+pip install -r requirements.txt
+python app.py
 ```
 
 Client dev server is typically on `http://localhost:5173`, server on `http://localhost:5000`.
 
-## Build
+## Requirements
 
-```bash
-cd server && npm run build
-```
-
-Frontend build remains managed by Vite in `client/`.
+- Node.js for the frontend
+- Python 3.7+ for the backend
+- pip for Python package management

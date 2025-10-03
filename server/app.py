@@ -1,5 +1,6 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
+import mysql.connector
 import os
 from dotenv import load_dotenv
 
@@ -7,6 +8,18 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+
+# --- Database configuration ---
+db_config = {
+    "host": os.getenv("MYSQL_HOST", "localhost"),
+    "user": os.getenv("MYSQL_USER", "root"),
+    "password": os.getenv("MYSQL_PASSWORD", ""),
+    "database": os.getenv("MYSQL_DB", "moneymap"),
+}
+
+# --- Helper function to get DB connection ---
+def get_connection():
+    return mysql.connector.connect(**db_config)
 
 @app.route('/api/health', methods=['GET'])
 def health_check():

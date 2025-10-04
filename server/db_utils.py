@@ -10,7 +10,7 @@ from cryptography.fernet import Fernet
 
 load_dotenv()
 
-# --- Database configuration ---
+#Database configuration
 db_config = {
     "host": os.getenv("MYSQL_HOST", "localhost"),
     "user": os.getenv("MYSQL_USER", "root"),
@@ -18,16 +18,16 @@ db_config = {
     "database": os.getenv("MYSQL_DB", "moneymap"),
 }
 
-# --- Encryption setup ---
+#Encryption setup
 ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY").encode()  # Must be 32-byte base64
 cipher = Fernet(ENCRYPTION_KEY)
 
-# --- DB connection helper ---
+#DB connection helper
 def get_connection():
     return mysql.connector.connect(**db_config)
 
 
-# --- Encryption / Decryption helpers ---
+#Encryption / Decryption helpers
 def encrypt_value(value):
     return cipher.encrypt(str(value).encode())
 
@@ -35,7 +35,8 @@ def decrypt_value(encrypted_value):
     return cipher.decrypt(encrypted_value).decode()
 
 
-# --- User helpers ---
+#User helpers
+#TODO need to check for existing user with same name
 def add_user(username, password):
     hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
     conn = get_connection()
@@ -77,7 +78,7 @@ def get_users():
     return users
 
 
-# --- Generic financial data helpers ---
+#Generic financial data helpers
 def add_entry(user_id, amount, table_name):
     encrypted_amount = encrypt_value(amount)
     conn = get_connection()
@@ -117,7 +118,7 @@ def update_entry(entry_id, new_amount, table_name):
     conn.close()
 
 
-# --- Specific financial data helpers ---
+#Specific financial data helpers
 def add_income(user_id, amount):
     add_entry(user_id, amount, "incomes")
 
@@ -144,3 +145,64 @@ def update_saving(saving_id, new_amount):
 
 def update_expense(expense_id, new_amount):
     update_entry(expense_id, new_amount, "expenses")
+
+
+#ensures all requried tables exist
+def initialize_database():
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        # Create users table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(255) NOT NULL UNIQUE,
+                password_hash VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # Create incomes table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS incomes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                amount_encrypted TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        """)
+
+        # Create expenses table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS expenses (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                amount_encrypted TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        """)
+
+        # Create savings table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS savings (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                amount_encrypted TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        """)
+
+        conn.commit()
+        print("Database tables verified or created successfully.")
+
+    except Error as e:
+        print(f"Error initializing database: {e}")
+    finally:
+        if conn and conn.is_connected():
+            cursor.close()
+            conn.close()

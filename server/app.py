@@ -9,7 +9,7 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# --- Database configuration ---
+#Database configuration JJ
 db_config = {
     "host": os.getenv("MYSQL_HOST", "localhost"),
     "user": os.getenv("MYSQL_USER", "root"),
@@ -17,7 +17,7 @@ db_config = {
     "database": os.getenv("MYSQL_DB", "moneymap"),
 }
 
-# --- Helper function to get DB connection ---
+#Helper function to get DB connection JJ
 def get_connection():
     return mysql.connector.connect(**db_config)
 

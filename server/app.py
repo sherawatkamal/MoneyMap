@@ -30,8 +30,8 @@ def db_test():
 @app.route('/createUser', methods=['POST'])
 def newUser():
     user_data = flask.request.get_json()
-    db_utils.add_user(user_data['username'], user_data['password]'])
-    return
+    db_utils.add_user(user_data['username'], user_data['password'])
+    return jsonify({'status': 'good'})
 
 @app.route('/login', methods=['POST'])
 def login():

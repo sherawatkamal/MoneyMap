@@ -65,7 +65,7 @@ def verify_user(username, password):
         return False
 
     stored_hash = result[0]
-    return bcrypt.checkpw(password.encode(), stored_hash)
+    return bcrypt.checkpw(password.encode(), stored_hash.encode())
 
 
 def get_users():

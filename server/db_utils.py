@@ -36,27 +36,88 @@ def decrypt_value(encrypted_value):
 
 
 #User helpers
-#TODO need to check for existing user with same name
-def add_user(username, password):
+def add_user(username, password, email, full_name=None, phone=None, age=None, 
+             occupation=None, annual_income=None, financial_goal=None, risk_tolerance=None):
+    """
+    Add a new user with comprehensive profile information
+    """
+    # Hash the password
     hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+    
+    # Encrypt sensitive financial data
+    annual_income_encrypted = encrypt_value(annual_income) if annual_income else None
+    
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO users (username, password_hash) VALUES (%s, %s)",
-        (username, hashed)
-    )
-    conn.commit()
-    cursor.close()
-    conn.close()
+    
+    try:
+        cursor.execute("""
+            INSERT INTO users (
+                username, password_hash, email, full_name, phone, age, 
+                occupation, annual_income_encrypted, financial_goal, risk_tolerance
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            username, hashed, email, full_name, phone, age,
+            occupation, annual_income_encrypted, financial_goal, risk_tolerance
+        ))
+        conn.commit()
+        return cursor.lastrowid  # Return the new user ID
+    except mysql.connector.Error as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
 
 
 # internal db helper for pulling singular user
 def get_user_single(username: str):
-    conn = db_utils.get_connection()
+    """
+    Get user information by username, including all profile data
+    """
+    conn = get_connection()
     try:
         with conn.cursor(dictionary=True) as cur:
-            cur.execute("SELECT id, username, password_hash FROM users WHERE username=%s LIMIT 1", (username,))
-            return cur.fetchone()
+            cur.execute("""
+                SELECT id, username, password_hash, email, full_name, phone, age, 
+                       occupation, annual_income_encrypted, financial_goal, risk_tolerance,
+                       created_at, updated_at 
+                FROM users WHERE username=%s LIMIT 1
+            """, (username,))
+            user = cur.fetchone()
+            
+            if user and user['annual_income_encrypted']:
+                # Decrypt the annual income
+                user['annual_income'] = float(decrypt_value(user['annual_income_encrypted']))
+                del user['annual_income_encrypted']  # Remove the encrypted version
+            
+            return user
+    finally:
+        conn.close()
+
+
+def user_exists_by_email(email: str):
+    """
+    Check if a user already exists with the given email
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM users WHERE email=%s LIMIT 1", (email,))
+            return cur.fetchone() is not None
+    finally:
+        conn.close()
+
+
+def user_exists_by_username(username: str):
+    """
+    Check if a user already exists with the given username
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM users WHERE username=%s LIMIT 1", (username,))
+            return cur.fetchone() is not None
     finally:
         conn.close()
 
@@ -171,7 +232,16 @@ def initialize_database():
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 username VARCHAR(255) NOT NULL UNIQUE,
                 password_hash VARCHAR(255) NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                email VARCHAR(255) NOT NULL,
+                full_name VARCHAR(255),
+                phone VARCHAR(20),
+                age INT,
+                occupation VARCHAR(255),
+                annual_income_encrypted TEXT,
+                financial_goal VARCHAR(255),
+                risk_tolerance VARCHAR(50),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )
         """)
 

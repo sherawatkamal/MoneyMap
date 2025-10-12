@@ -5,12 +5,16 @@ import mysql.connector
 import os
 from dotenv import load_dotenv
 import db_utils
+from auth_system import auth_bp
 
 load_dotenv()
 db_utils.initialize_database()
 
 app = Flask(__name__)
 CORS(app)
+
+# Register the auth blueprint
+app.register_blueprint(auth_bp, url_prefix='/')
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -41,5 +45,5 @@ def login():
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 5001))
     app.run(host='0.0.0.0', port=port, debug=True)

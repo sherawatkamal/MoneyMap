@@ -50,6 +50,17 @@ def add_user(username, password):
     conn.close()
 
 
+# internal db helper for pulling singular user
+def get_user_single(username: str):
+    conn = db_utils.get_connection()
+    try:
+        with conn.cursor(dictionary=True) as cur:
+            cur.execute("SELECT id, username, password_hash FROM users WHERE username=%s LIMIT 1", (username,))
+            return cur.fetchone()
+    finally:
+        conn.close()
+
+
 def verify_user(username, password):
     conn = get_connection()
     cursor = conn.cursor()

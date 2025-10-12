@@ -37,10 +37,8 @@ def newUser():
 def login():
     user_data = flask.request.get_json()
     db_utils.verify_user(user_data['username'], user_data['password'])
-    return
+    return jsonify({'status': 'good'})
 
-
-    
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

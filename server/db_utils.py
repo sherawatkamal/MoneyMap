@@ -32,7 +32,11 @@ def encrypt_value(value):
     return cipher.encrypt(str(value).encode())
 
 def decrypt_value(encrypted_value):
-    return cipher.decrypt(encrypted_value).decode()
+    try:
+        return cipher.decrypt(encrypted_value).decode()
+    except:
+        # If decryption fails (e.g., due to key change), return None
+        return None
 
 
 #User helpers
@@ -80,15 +84,41 @@ def get_user_single(username: str):
         with conn.cursor(dictionary=True) as cur:
             cur.execute("""
                 SELECT id, username, password_hash, email, full_name, phone, age, 
-                       occupation, annual_income_encrypted, financial_goal, risk_tolerance,
-                       created_at, updated_at 
+                       occupation, annual_income_encrypted, financial_goal, risk_tolerance
                 FROM users WHERE username=%s LIMIT 1
             """, (username,))
             user = cur.fetchone()
             
             if user and user['annual_income_encrypted']:
                 # Decrypt the annual income
-                user['annual_income'] = float(decrypt_value(user['annual_income_encrypted']))
+                decrypted_value = decrypt_value(user['annual_income_encrypted'])
+                if decrypted_value:
+                    user['annual_income'] = float(decrypted_value)
+                del user['annual_income_encrypted']  # Remove the encrypted version
+            
+            return user
+    finally:
+        conn.close()
+
+def get_user_by_email(email: str):
+    """
+    Get user information by email, including all profile data
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor(dictionary=True) as cur:
+            cur.execute("""
+                SELECT id, username, password_hash, email, full_name, phone, age, 
+                       occupation, annual_income_encrypted, financial_goal, risk_tolerance
+                FROM users WHERE email=%s LIMIT 1
+            """, (email,))
+            user = cur.fetchone()
+            
+            if user and user['annual_income_encrypted']:
+                # Decrypt the annual income
+                decrypted_value = decrypt_value(user['annual_income_encrypted'])
+                if decrypted_value:
+                    user['annual_income'] = float(decrypted_value)
                 del user['annual_income_encrypted']  # Remove the encrypted version
             
             return user
@@ -118,6 +148,31 @@ def user_exists_by_username(username: str):
         with conn.cursor() as cur:
             cur.execute("SELECT id FROM users WHERE username=%s LIMIT 1", (username,))
             return cur.fetchone() is not None
+    finally:
+        conn.close()
+
+def get_user_by_id(user_id: int):
+    """
+    Get user information by ID, including all profile data
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor(dictionary=True) as cur:
+            cur.execute("""
+                SELECT id, username, email, full_name, phone, age, 
+                       occupation, annual_income_encrypted, financial_goal, risk_tolerance
+                FROM users WHERE id=%s LIMIT 1
+            """, (user_id,))
+            user = cur.fetchone()
+            
+            if user and user['annual_income_encrypted']:
+                # Decrypt the annual income
+                decrypted_value = decrypt_value(user['annual_income_encrypted'])
+                if decrypted_value:
+                    user['annual_income'] = float(decrypted_value)
+                del user['annual_income_encrypted']  # Remove the encrypted version
+            
+            return user
     finally:
         conn.close()
 
@@ -240,6 +295,8 @@ def initialize_database():
                 annual_income_encrypted TEXT,
                 financial_goal VARCHAR(255),
                 risk_tolerance VARCHAR(50),
+                reset_token VARCHAR(255),
+                reset_token_expires TIMESTAMP NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )

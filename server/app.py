@@ -1,17 +1,30 @@
 from flask import Flask, jsonify
 import flask
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
 import mysql.connector
 import os
 from dotenv import load_dotenv
 import db_utils
-from auth_system import auth_bp
+from auth_system import auth_bp, attach_blocklist_checker
 
 load_dotenv()
 db_utils.initialize_database()
 
 app = Flask(__name__)
-CORS(app)
+
+# Configure CORS with specific origins
+CORS(app, origins=['http://localhost:5173', 'http://127.0.0.1:5173'], 
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+     allow_headers=['Content-Type', 'Authorization'])
+
+# Configure JWT
+app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-this')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False  # Tokens don't expire for now
+jwt = JWTManager(app)
+
+# Attach blocklist checker for logout functionality
+attach_blocklist_checker(jwt)
 
 # Register the auth blueprint
 app.register_blueprint(auth_bp, url_prefix='/')
@@ -31,18 +44,7 @@ def db_test():
     return jsonify({"db_time": str(result[0])})
 
 
-@app.route('/createUser', methods=['POST'])
-def newUser():
-    user_data = flask.request.get_json()
-    db_utils.add_user(user_data['username'], user_data['password'])
-    return jsonify({'status': 'good'})
-
-@app.route('/login', methods=['POST'])
-def login():
-    user_data = flask.request.get_json()
-    db_utils.verify_user(user_data['username'], user_data['password'])
-    return jsonify({'status': 'good'})
-
+# Removed duplicate routes - they are handled by auth_system blueprint
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))

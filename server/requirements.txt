@@ -5,3 +5,4 @@ Flask-JWT-Extended>=4.0.0
 mysql-connector-python>=8.0.0
 cryptography>=3.0.0
 python-dotenv>=0.19.0
+Flask-Mail>=0.9.1

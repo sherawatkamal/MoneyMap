@@ -41,7 +41,7 @@ export default function Signup() {
         window.google.accounts.id.renderButton(googleButtonRef.current, {
           theme: 'outline',
           size: 'large',
-          width: '100%',
+          width: 300,
           text: 'signup_with',
         });
       }

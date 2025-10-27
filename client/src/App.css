@@ -1817,3 +1817,20 @@
   font-size: 0.875rem;
   color: var(--text-secondary);
 }
+
+/* Google Sign-In Button Container */
+#google-signin-button-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+#google-signin-button-container > div {
+  width: 100% !important;
+}
+
+/* Google Sign-In Button Full Width */
+iframe[id^="credential"] {
+  width: 100% !important;
+  max-width: 100% !important;
+}

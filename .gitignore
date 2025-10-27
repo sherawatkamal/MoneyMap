@@ -15,3 +15,6 @@ server/__pycache__
 venv/
 *.pyc
 __pycache__/
+
+# Google OAuth credentials
+client_secret_*.json

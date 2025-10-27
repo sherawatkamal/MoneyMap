@@ -2,9 +2,14 @@ from flask import request, jsonify, Blueprint
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt
 import bcrypt
 import mysql.connector
+import os
+import requests
+from dotenv import load_dotenv
 
 import db_utils
 import password_reset
+
+load_dotenv()
 
 # blueprint for auth enpoints
 auth_bp  = Blueprint('auth', __name__)
@@ -252,6 +257,69 @@ def get_profile():
     }
     
     return jsonify(user_data), 200
+
+@auth_bp.route('/google-auth', methods=['POST'])
+def google_auth():
+    """Handle Google OAuth authentication"""
+    data = request.get_json(silent=True) or {}
+    google_token = data.get('token')
+    
+    if not google_token:
+        return jsonify({"msg": "Google token is required"}), 400
+    
+    try:
+        # Verify the Google token with Google's API
+        google_response = requests.get(
+            f'https://www.googleapis.com/oauth2/v1/userinfo?access_token={google_token}'
+        )
+        
+        if google_response.status_code != 200:
+            return jsonify({"msg": "Invalid Google token"}), 401
+        
+        google_user = google_response.json()
+        
+        # Extract user information
+        email = google_user.get('email')
+        name = google_user.get('name', '')
+        google_id = google_user.get('id')
+        
+        if not email:
+            return jsonify({"msg": "Email not provided by Google"}), 400
+        
+        # Check if user already exists
+        user = db_utils.get_user_by_email(email)
+        
+        if user:
+            # User exists, create JWT token
+            access_token = create_access_token(identity=str(user["id"]))
+            return jsonify({
+                "access_token": access_token,
+                "msg": "Login successful"
+            }), 200
+        else:
+            # New user, create account
+            # Generate a random password for OAuth users (they won't use it)
+            import secrets
+            random_password = secrets.token_urlsafe(32)
+            
+            user_id = db_utils.add_user(
+                username=email,
+                password=random_password,
+                email=email,
+                full_name=name
+            )
+            
+            # Create JWT token
+            access_token = create_access_token(identity=str(user_id))
+            return jsonify({
+                "access_token": access_token,
+                "msg": "Account created successfully"
+            }), 201
+            
+    except requests.RequestException as e:
+        return jsonify({"msg": f"Error verifying Google token: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"msg": f"Error during Google authentication: {str(e)}"}), 500
 
 # blocklist check to jwtmanager
 def attach_blocklist_checker(jwt_manager):

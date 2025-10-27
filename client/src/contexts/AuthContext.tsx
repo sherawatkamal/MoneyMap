@@ -18,6 +18,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<boolean>;
+  loginWithGoogle: (googleToken: string) => Promise<boolean>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   loading: boolean;
@@ -160,6 +161,52 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = async (googleToken: string): Promise<boolean> => {
+    try {
+      const response = await fetch('http://localhost:5001/google-auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token: googleToken }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.access_token) {
+        setToken(data.access_token);
+        localStorage.setItem('token', data.access_token);
+        
+        // Fetch user profile data from backend
+        try {
+          const profileResponse = await fetch('http://localhost:5001/profile', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${data.access_token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (profileResponse.ok) {
+            const userData = await profileResponse.json();
+            setUser(userData);
+            localStorage.setItem('user', JSON.stringify(userData));
+          }
+        } catch (profileError) {
+          console.error('Error fetching user profile:', profileError);
+        }
+        
+        return true;
+      } else {
+        console.error('Google login failed:', data.msg);
+        return false;
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      return false;
+    }
+  };
+
   const logout = async (): Promise<void> => {
     try {
       if (token) {
@@ -190,6 +237,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     token,
     login,
+    loginWithGoogle,
     logout,
     isAuthenticated,
     loading,

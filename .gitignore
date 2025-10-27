@@ -9,5 +9,9 @@
 /server/node_modules
 /server/dist
 /server/.env
+/server/__pycache__
+server/__pycache__
 
 venv/
+*.pyc
+__pycache__/

@@ -1,11 +1,18 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard'
 import { useAuth } from '../contexts/AuthContext'
 
+declare global {
+  interface Window {
+    google: any;
+  }
+}
+
 export default function Login() {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login, loginWithGoogle } = useAuth()
+  const googleButtonRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [failedAttempts, setFailedAttempts] = useState(0)
@@ -40,6 +47,59 @@ export default function Login() {
       }
     }
   }, [navigate])
+
+  // Initialize Google Sign-In
+  useEffect(() => {
+    const initializeGoogleSignIn = () => {
+      if (window.google && googleButtonRef.current) {
+        window.google.accounts.id.initialize({
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+          callback: handleGoogleCredentialResponse,
+        });
+
+        window.google.accounts.id.renderButton(googleButtonRef.current, {
+          theme: 'outline',
+          size: 'large',
+          width: '100%',
+          text: 'signin_with',
+        });
+      }
+    };
+
+    // Wait for Google API to load
+    const checkGoogleApi = setInterval(() => {
+      if (window.google) {
+        initializeGoogleSignIn();
+        clearInterval(checkGoogleApi);
+      }
+    }, 100);
+
+    return () => clearInterval(checkGoogleApi);
+  }, []);
+
+  const handleGoogleCredentialResponse = async (response: any) => {
+    if (response.credential) {
+      setIsLoading(true);
+      setError('');
+
+      try {
+        // Use the credential to get an access token
+        const googleToken = response.credential;
+        const success = await loginWithGoogle(googleToken);
+        
+        if (success) {
+          navigate('/dashboard');
+        } else {
+          setError('Google sign-in failed. Please try again.');
+        }
+      } catch (error) {
+        console.error('Google sign-in error:', error);
+        setError('An error occurred during Google sign-in.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -169,6 +229,12 @@ export default function Login() {
           >
             {isLoading ? 'Signing in...' : 'Sign in'}
           </button>
+
+          <div className="divider">
+            <span>or continue with</span>
+          </div>
+
+          <div ref={googleButtonRef}></div>
         </form>
       </AuthCard>
     </div>

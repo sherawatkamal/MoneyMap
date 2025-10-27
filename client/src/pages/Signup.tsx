@@ -1,11 +1,18 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard'
 import { useAuth } from '../contexts/AuthContext'
 
+declare global {
+  interface Window {
+    google: any;
+  }
+}
+
 export default function Signup() {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login, loginWithGoogle } = useAuth()
+  const googleButtonRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
@@ -21,6 +28,54 @@ export default function Signup() {
     phone: ''
   })
   const [errors, setErrors] = useState<{[key: string]: string}>({})
+
+  // Initialize Google Sign-In
+  useEffect(() => {
+    const initializeGoogleSignIn = () => {
+      if (window.google && googleButtonRef.current) {
+        window.google.accounts.id.initialize({
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+          callback: handleGoogleCredentialResponse,
+        });
+
+        window.google.accounts.id.renderButton(googleButtonRef.current, {
+          theme: 'outline',
+          size: 'large',
+          width: '100%',
+          text: 'signup_with',
+        });
+      }
+    };
+
+    // Wait for Google API to load
+    const checkGoogleApi = setInterval(() => {
+      if (window.google) {
+        initializeGoogleSignIn();
+        clearInterval(checkGoogleApi);
+      }
+    }, 100);
+
+    return () => clearInterval(checkGoogleApi);
+  }, []);
+
+  const handleGoogleCredentialResponse = async (response: any) => {
+    if (response.credential) {
+      setIsLoading(true);
+
+      try {
+        const googleToken = response.credential;
+        const success = await loginWithGoogle(googleToken);
+        
+        if (success) {
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        console.error('Google sign-up error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -372,13 +427,21 @@ export default function Signup() {
                   Next →
                 </button>
               ) : (
-                <button 
-                  type="submit" 
-                  className={`btn-primary ${isLoading ? 'loading' : ''}`}
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Creating account...' : 'Create account'}
-                </button>
+                <>
+                  <button 
+                    type="submit" 
+                    className={`btn-primary ${isLoading ? 'loading' : ''}`}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Creating account...' : 'Create account'}
+                  </button>
+
+                  <div className="divider">
+                    <span>or sign up with</span>
+                  </div>
+
+                  <div ref={googleButtonRef}></div>
+                </>
               )}
             </div>
           </form>

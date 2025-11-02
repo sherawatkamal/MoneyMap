@@ -23,6 +23,8 @@ export default function Signup() {
     age: '',
     occupation: '',
     annualIncome: '',
+    currentSavings: '',
+    monthlyExpenses: '',
     financialGoal: '',
     riskTolerance: '',
     phone: ''
@@ -41,7 +43,7 @@ export default function Signup() {
         window.google.accounts.id.renderButton(googleButtonRef.current, {
           theme: 'outline',
           size: 'large',
-          width: 300,
+          width: '100%',
           text: 'signup_with',
         });
       }
@@ -153,10 +155,10 @@ export default function Signup() {
       const result = await response.json()
       
       if (response.ok) {
-        // Success - automatically log the user in and redirect to dashboard
+        // Success - automatically log the user in and redirect to visualization
         const loginSuccess = await login(formData.email, formData.password)
         if (loginSuccess) {
-          navigate('/dashboard')
+          navigate('/visualization')
         } else {
           // If auto-login fails, redirect to login page
           navigate('/login')
@@ -239,7 +241,7 @@ export default function Signup() {
         return (
           <div className="step-content">
             <div className="step-header">
-              <h3>Financial Information</h3>
+              <h3>💰 Financial Foundation</h3>
               <p>Help us understand your financial situation</p>
             </div>
             <div className="form-grid">
@@ -265,6 +267,31 @@ export default function Signup() {
                   min="0"
                 />
                 {errors.annualIncome && <small className="error-text">{errors.annualIncome}</small>}
+              </label>
+              <label>
+                <span>🏦 Current Savings ($)</span>
+                <input 
+                  type="number" 
+                  name="currentSavings"
+                  placeholder="Enter your current savings" 
+                  value={formData.currentSavings}
+                  onChange={handleInputChange}
+                  min="0"
+                />
+              </label>
+              <label>
+                <span>💳 Monthly Expenses ($)</span>
+                <input 
+                  type="number" 
+                  name="monthlyExpenses"
+                  placeholder="Enter monthly expenses" 
+                  value={formData.monthlyExpenses}
+                  onChange={handleInputChange}
+                  min="0"
+                />
+                <small style={{color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block'}}>
+                  Or leave blank to estimate (70% of monthly income)
+                </small>
               </label>
             </div>
           </div>
@@ -440,7 +467,9 @@ export default function Signup() {
                     <span>or sign up with</span>
                   </div>
 
-                  <div ref={googleButtonRef}></div>
+                  <div id="google-signin-button-container" style={{ width: '100%' }}>
+                    <div ref={googleButtonRef}></div>
+                  </div>
                 </>
               )}
             </div>

@@ -5,6 +5,7 @@
 import os
 import bcrypt
 import mysql.connector
+from mysql.connector import Error
 from dotenv import load_dotenv
 from cryptography.fernet import Fernet
 
@@ -301,7 +302,7 @@ def initialize_database():
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )
         """)
-
+        
         # Create incomes table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS incomes (
@@ -335,6 +336,89 @@ def initialize_database():
             )
         """)
 
+        # Create user_preferences table for emergency fund and other preferences
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_preferences (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL UNIQUE,
+                current_savings DECIMAL(15,2),
+                monthly_expenses DECIMAL(15,2),
+                emergency_fund_target DECIMAL(15,2),
+                monthly_contribution DECIMAL(15,2),
+                emergency_goal VARCHAR(255),
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        """)
+
+        # Create stock_watchlist table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS stock_watchlist (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                stock_ticker VARCHAR(10) NOT NULL,
+                stock_name VARCHAR(255),
+                current_price DECIMAL(15,2),
+                notes TEXT,
+                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                UNIQUE KEY unique_user_ticker (user_id, stock_ticker)
+            )
+        """)
+        
+        # Check if existing user_preferences table needs migration
+        cursor.execute("SHOW TABLES LIKE 'user_preferences'")
+        table_exists = cursor.fetchone()
+        
+        if table_exists:
+            # Check if current_savings column exists
+            cursor.execute("SHOW COLUMNS FROM user_preferences LIKE 'current_savings'")
+            has_current_savings = cursor.fetchone()
+            
+            if not has_current_savings:
+                try:
+                    cursor.execute("ALTER TABLE user_preferences ADD COLUMN current_savings DECIMAL(15,2)")
+                    print("Added current_savings column to user_preferences table")
+                except mysql.connector.Error as e:
+                    if e.errno != 1060:  # Duplicate column name error
+                        print(f"Error adding current_savings column: {e}")
+            
+            # Check if monthly_expenses column exists
+            cursor.execute("SHOW COLUMNS FROM user_preferences LIKE 'monthly_expenses'")
+            has_monthly_expenses = cursor.fetchone()
+            
+            if not has_monthly_expenses:
+                try:
+                    cursor.execute("ALTER TABLE user_preferences ADD COLUMN monthly_expenses DECIMAL(15,2)")
+                    print("Added monthly_expenses column to user_preferences table")
+                except mysql.connector.Error as e:
+                    if e.errno != 1060:  # Duplicate column name error
+                        print(f"Error adding monthly_expenses column: {e}")
+            
+            # Check if stock_watchlist table exists
+            cursor.execute("SHOW TABLES LIKE 'stock_watchlist'")
+            has_watchlist = cursor.fetchone()
+            
+            if not has_watchlist:
+                try:
+                    cursor.execute("""
+                        CREATE TABLE stock_watchlist (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            user_id INT NOT NULL,
+                            stock_ticker VARCHAR(10) NOT NULL,
+                            stock_name VARCHAR(255),
+                            current_price DECIMAL(15,2),
+                            notes TEXT,
+                            added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                            UNIQUE KEY unique_user_ticker (user_id, stock_ticker)
+                        )
+                    """)
+                    print("Added stock_watchlist table")
+                except mysql.connector.Error as e:
+                    if e.errno != 1050:  # Table exists error
+                        print(f"Error creating stock_watchlist table: {e}")
+
         conn.commit()
         print("Database tables verified or created successfully.")
 
@@ -344,3 +428,167 @@ def initialize_database():
         if conn and conn.is_connected():
             cursor.close()
             conn.close()
+
+
+# User preferences helpers
+def get_user_preferences(user_id):
+    """
+    Get user preferences for emergency fund and other settings
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor(dictionary=True) as cur:
+            cur.execute("""
+                SELECT current_savings, monthly_expenses, emergency_fund_target, 
+                       monthly_contribution, emergency_goal
+                FROM user_preferences WHERE user_id=%s
+            """, (user_id,))
+            return cur.fetchone()
+    finally:
+        conn.close()
+
+
+def create_user_preferences(user_id, current_savings=None, monthly_expenses=None):
+    """
+    Create initial user preferences with financial data from signup
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("""
+            INSERT INTO user_preferences (user_id, current_savings, monthly_expenses)
+            VALUES (%s, %s, %s)
+        """, (user_id, current_savings, monthly_expenses))
+        
+        conn.commit()
+        return True
+    except mysql.connector.IntegrityError:
+        # Preferences already exist, just return True
+        conn.rollback()
+        return True
+    except mysql.connector.Error as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def update_user_preferences(user_id, emergency_fund_target=None, monthly_contribution=None, emergency_goal=None, current_savings=None, monthly_expenses=None):
+    """
+    Update user preferences. Creates row if it doesn't exist.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Check if preferences exist
+        cursor.execute("SELECT id FROM user_preferences WHERE user_id=%s", (user_id,))
+        exists = cursor.fetchone()
+        
+        if exists:
+            # Update existing preferences
+            updates = []
+            values = []
+            
+            if emergency_fund_target is not None:
+                updates.append("emergency_fund_target=%s")
+                values.append(emergency_fund_target)
+            
+            if monthly_contribution is not None:
+                updates.append("monthly_contribution=%s")
+                values.append(monthly_contribution)
+            
+            if emergency_goal is not None:
+                updates.append("emergency_goal=%s")
+                values.append(emergency_goal)
+            
+            if current_savings is not None:
+                updates.append("current_savings=%s")
+                values.append(current_savings)
+            
+            if monthly_expenses is not None:
+                updates.append("monthly_expenses=%s")
+                values.append(monthly_expenses)
+            
+            if updates:
+                values.append(user_id)
+                cursor.execute(
+                    f"UPDATE user_preferences SET {', '.join(updates)} WHERE user_id=%s",
+                    values
+                )
+        else:
+            # Insert new preferences
+            cursor.execute("""
+                INSERT INTO user_preferences (user_id, emergency_fund_target, monthly_contribution, emergency_goal, current_savings, monthly_expenses)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (user_id, emergency_fund_target, monthly_contribution, emergency_goal, current_savings, monthly_expenses))
+        
+        conn.commit()
+        return True
+    except mysql.connector.Error as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def update_user_profile(user_id, full_name=None, phone=None, age=None, 
+                        occupation=None, annual_income=None, financial_goal=None, 
+                        risk_tolerance=None):
+    """
+    Update user profile information
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    try:
+        updates = []
+        values = []
+        
+        if full_name is not None:
+            updates.append("full_name=%s")
+            values.append(full_name)
+        
+        if phone is not None:
+            updates.append("phone=%s")
+            values.append(phone)
+        
+        if age is not None:
+            updates.append("age=%s")
+            values.append(age)
+        
+        if occupation is not None:
+            updates.append("occupation=%s")
+            values.append(occupation)
+        
+        if annual_income is not None:
+            annual_income_encrypted = encrypt_value(annual_income)
+            updates.append("annual_income_encrypted=%s")
+            values.append(annual_income_encrypted)
+        
+        if financial_goal is not None:
+            updates.append("financial_goal=%s")
+            values.append(financial_goal)
+        
+        if risk_tolerance is not None:
+            updates.append("risk_tolerance=%s")
+            values.append(risk_tolerance)
+        
+        if updates:
+            values.append(user_id)
+            cursor.execute(
+                f"UPDATE users SET {', '.join(updates)} WHERE id=%s",
+                values
+            )
+            conn.commit()
+            return True
+        return False
+    except mysql.connector.Error as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+        conn.close()

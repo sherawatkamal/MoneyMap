@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
@@ -6,6 +6,9 @@ import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
+import Settings from './pages/Settings';
+import FinancialVisualization from './pages/FinancialVisualization';
+import Investments from './pages/Investments';
 import Navbar from './components/Navbar';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
@@ -28,6 +31,9 @@ const FinancialForm: React.FC<{
 
   const isFormValid = data.currentSavings > 0 && data.monthlyIncome > 0 && data.monthlyExpenses > 0;
 
+  const { user } = useAuth();
+  const hasPrefilledData = user?.annual_income && user.annual_income > 0;
+
   return (
     <div className="form-container fade-in">
       <div style={{textAlign: 'center', marginBottom: '2rem'}}>
@@ -46,6 +52,20 @@ const FinancialForm: React.FC<{
         </div>
         <h2>Financial Foundation</h2>
         <p>Enter your basic financial information to get started</p>
+        {hasPrefilledData && (
+          <div style={{
+            marginTop: '1rem',
+            padding: '0.75rem 1.5rem',
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%)',
+            border: '1px solid rgba(16, 185, 129, 0.2)',
+            borderRadius: 'var(--radius-lg)',
+            color: 'var(--success-color)',
+            fontSize: '0.9rem',
+            display: 'inline-block'
+          }}>
+            ✨ Values pre-filled from your profile
+          </div>
+        )}
       </div>
       
       <div className="form-group">
@@ -292,12 +312,67 @@ const Recommendations: React.FC<{
 };
 
 function PlannerApp() {
+  const { user, token } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [financialData, setFinancialData] = useState<FinancialData>({
     currentSavings: 0,
     monthlyIncome: 0,
     monthlyExpenses: 0,
   });
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize with user's saved data from signup
+  useEffect(() => {
+    const fetchFinancialData = async () => {
+      if (user && !isInitialized && token) {
+        try {
+          // Fetch user preferences
+          const response = await fetch('http://localhost:5001/user-preferences', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          const annualIncome = user.annual_income || 0;
+          const monthlyIncome = annualIncome / 12;
+
+          if (response.ok) {
+            const preferences = await response.json();
+            
+            // Use saved values if available
+            setFinancialData({
+              currentSavings: preferences.current_savings || 0,
+              monthlyIncome: monthlyIncome || 0,
+              monthlyExpenses: preferences.monthly_expenses || (monthlyIncome * 0.7), // Use saved or estimate
+            });
+          } else {
+            // Fallback to estimating from annual income
+            setFinancialData({
+              currentSavings: 0,
+              monthlyIncome: monthlyIncome || 0,
+              monthlyExpenses: monthlyIncome * 0.7,
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching preferences:', error);
+          // Fallback to estimating from annual income
+          const annualIncome = user.annual_income || 0;
+          const monthlyIncome = annualIncome / 12;
+          setFinancialData({
+            currentSavings: 0,
+            monthlyIncome: monthlyIncome || 0,
+            monthlyExpenses: monthlyIncome * 0.7,
+          });
+        }
+        setIsInitialized(true);
+      }
+    };
+
+    fetchFinancialData();
+  }, [user, isInitialized, token]);
+
   const nextStep = () => setCurrentStep(1);
   const prevStep = () => setCurrentStep(0);
 
@@ -409,6 +484,30 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <PlannerApp />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/settings" 
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/visualization" 
+          element={
+            <ProtectedRoute>
+              <FinancialVisualization />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/investments" 
+          element={
+            <ProtectedRoute>
+              <Investments />
             </ProtectedRoute>
           } 
         />

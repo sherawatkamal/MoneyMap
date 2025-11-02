@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 import db_utils
 import password_reset
+from ml_models.stock_predictor import get_recommendations, get_stock_details
 
 load_dotenv()
 
@@ -46,6 +47,8 @@ def handle_register(data: dict):
     annual_income = data.get('annualIncome')
     financial_goal = data.get('financialGoal')
     risk_tolerance = data.get('riskTolerance')
+    current_savings = data.get('currentSavings')
+    monthly_expenses = data.get('monthlyExpenses')
     
     # Validate required fields
     if not username or not password:
@@ -73,6 +76,24 @@ def handle_register(data: dict):
         except (ValueError, TypeError):
             return jsonify({"msg": "Invalid annual income format"}), 400
     
+    # Validate current savings
+    if current_savings:
+        try:
+            current_savings = float(current_savings)
+            if current_savings < 0:
+                return jsonify({"msg": "Current savings cannot be negative"}), 400
+        except (ValueError, TypeError):
+            return jsonify({"msg": "Invalid current savings format"}), 400
+    
+    # Validate monthly expenses
+    if monthly_expenses:
+        try:
+            monthly_expenses = float(monthly_expenses)
+            if monthly_expenses < 0:
+                return jsonify({"msg": "Monthly expenses cannot be negative"}), 400
+        except (ValueError, TypeError):
+            return jsonify({"msg": "Invalid monthly expenses format"}), 400
+    
     try:
         user_id = db_utils.add_user(
             username=username,
@@ -85,6 +106,14 @@ def handle_register(data: dict):
             annual_income=annual_income,
             financial_goal=financial_goal,
             risk_tolerance=risk_tolerance
+        )
+        
+        # Create user preferences with financial data
+        # Always create preferences even if empty, so we have a row
+        db_utils.create_user_preferences(
+            user_id=user_id,
+            current_savings=float(current_savings) if current_savings else 0,
+            monthly_expenses=float(monthly_expenses) if monthly_expenses else None
         )
         
         return jsonify({
@@ -320,6 +349,350 @@ def google_auth():
         return jsonify({"msg": f"Error verifying Google token: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"msg": f"Error during Google authentication: {str(e)}"}), 500
+
+@auth_bp.route('/user-preferences', methods=['GET'])
+@jwt_required()
+def get_user_preferences():
+    """Get current user's emergency fund preferences"""
+    from flask_jwt_extended import get_jwt_identity
+    
+    identity = get_jwt_identity()
+    user_id = int(identity) if identity else None
+    
+    if not user_id:
+        return jsonify({"msg": "Invalid token"}), 401
+    
+    preferences = db_utils.get_user_preferences(user_id)
+    
+    if not preferences:
+        # Return empty preferences if none exist
+        return jsonify({
+            "current_savings": None,
+            "monthly_expenses": None,
+            "emergency_fund_target": None,
+            "monthly_contribution": None,
+            "emergency_goal": None
+        }), 200
+    
+    # Convert Decimal to float for JSON serialization
+    result = {}
+    
+    if preferences.get('current_savings') is not None:
+        result['current_savings'] = float(preferences['current_savings'])
+    else:
+        result['current_savings'] = None
+    
+    if preferences.get('monthly_expenses') is not None:
+        result['monthly_expenses'] = float(preferences['monthly_expenses'])
+    else:
+        result['monthly_expenses'] = None
+    
+    if preferences.get('emergency_fund_target') is not None:
+        result['emergency_fund_target'] = float(preferences['emergency_fund_target'])
+    else:
+        result['emergency_fund_target'] = None
+    
+    if preferences.get('monthly_contribution') is not None:
+        result['monthly_contribution'] = float(preferences['monthly_contribution'])
+    else:
+        result['monthly_contribution'] = None
+    
+    result['emergency_goal'] = preferences.get('emergency_goal')
+    
+    return jsonify(result), 200
+
+
+@auth_bp.route('/user-preferences', methods=['PUT'])
+@jwt_required()
+def update_user_preferences():
+    """Update current user's emergency fund preferences"""
+    from flask_jwt_extended import get_jwt_identity
+    
+    identity = get_jwt_identity()
+    user_id = int(identity) if identity else None
+    
+    if not user_id:
+        return jsonify({"msg": "Invalid token"}), 401
+    
+    data = request.get_json(silent=True) or {}
+    
+    # Extract preference data
+    emergency_fund_target = data.get('emergency_fund_target')
+    monthly_contribution = data.get('monthly_contribution')
+    emergency_goal = data.get('emergency_goal')
+    
+    # Validate and convert values
+    try:
+        if emergency_fund_target is not None:
+            emergency_fund_target = float(emergency_fund_target)
+            if emergency_fund_target < 0:
+                return jsonify({"msg": "Emergency fund target cannot be negative"}), 400
+        
+        if monthly_contribution is not None:
+            monthly_contribution = float(monthly_contribution)
+            if monthly_contribution < 0:
+                return jsonify({"msg": "Monthly contribution cannot be negative"}), 400
+    except (ValueError, TypeError):
+        return jsonify({"msg": "Invalid number format"}), 400
+    
+    try:
+        db_utils.update_user_preferences(
+            user_id=user_id,
+            emergency_fund_target=emergency_fund_target,
+            monthly_contribution=monthly_contribution,
+            emergency_goal=emergency_goal
+        )
+        
+        return jsonify({"msg": "Preferences updated successfully"}), 200
+    except Exception as e:
+        return jsonify({"msg": f"Error updating preferences: {str(e)}"}), 500
+
+
+@auth_bp.route('/profile', methods=['PUT'])
+@jwt_required()
+def update_profile():
+    """Update current user's profile information"""
+    from flask_jwt_extended import get_jwt_identity
+    
+    identity = get_jwt_identity()
+    user_id = int(identity) if identity else None
+    
+    if not user_id:
+        return jsonify({"msg": "Invalid token"}), 401
+    
+    data = request.get_json(silent=True) or {}
+    
+    # Extract profile data
+    full_name = data.get('full_name')
+    phone = data.get('phone')
+    age = data.get('age')
+    occupation = data.get('occupation')
+    annual_income = data.get('annual_income')
+    current_savings = data.get('current_savings')
+    monthly_expenses = data.get('monthly_expenses')
+    financial_goal = data.get('financial_goal')
+    risk_tolerance = data.get('risk_tolerance')
+    
+    # Validate and convert values
+    try:
+        if age is not None and age != '':
+            age = int(age)
+            if age < 18 or age > 100:
+                return jsonify({"msg": "Age must be between 18 and 100"}), 400
+        
+        if annual_income is not None and annual_income != '':
+            annual_income = float(annual_income)
+            if annual_income < 0:
+                return jsonify({"msg": "Annual income cannot be negative"}), 400
+        
+        if current_savings is not None and current_savings != '':
+            current_savings = float(current_savings)
+            if current_savings < 0:
+                return jsonify({"msg": "Current savings cannot be negative"}), 400
+        
+        if monthly_expenses is not None and monthly_expenses != '':
+            monthly_expenses = float(monthly_expenses)
+            if monthly_expenses < 0:
+                return jsonify({"msg": "Monthly expenses cannot be negative"}), 400
+    except (ValueError, TypeError):
+        return jsonify({"msg": "Invalid number format"}), 400
+    
+    try:
+        # Update profile in users table
+        db_utils.update_user_profile(
+            user_id=user_id,
+            full_name=full_name,
+            phone=phone,
+            age=age,
+            occupation=occupation,
+            annual_income=annual_income,
+            financial_goal=financial_goal,
+            risk_tolerance=risk_tolerance
+        )
+        
+        # Update financial foundation data in user_preferences
+        if current_savings is not None or monthly_expenses is not None:
+            db_utils.update_user_preferences(
+                user_id=user_id,
+                current_savings=current_savings,
+                monthly_expenses=monthly_expenses
+            )
+        
+        return jsonify({"msg": "Profile updated successfully"}), 200
+    except Exception as e:
+        return jsonify({"msg": f"Error updating profile: {str(e)}"}), 500
+
+
+@auth_bp.route('/stock-recommendations', methods=['GET'])
+@jwt_required()
+def get_stock_recommendations():
+    """Get personalized stock recommendations based on user's risk tolerance"""
+    from flask_jwt_extended import get_jwt_identity
+    
+    identity = get_jwt_identity()
+    user_id = int(identity) if identity else None
+    
+    if not user_id:
+        return jsonify({"msg": "Invalid token"}), 401
+    
+    # Get user's risk tolerance
+    user = db_utils.get_user_by_id(user_id)
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+    
+    # Map risk_tolerance string to number
+    risk_map = {
+        'conservative': 3,
+        'moderate': 6,
+        'aggressive': 9
+    }
+    
+    risk_tolerance_str = user.get('risk_tolerance', 'moderate')
+    risk_tolerance = risk_map.get(risk_tolerance_str, 6)
+    
+    try:
+        # Get recommendations from ML model
+        recommendations = get_recommendations(risk_tolerance)
+        
+        return jsonify({
+            "user_risk_tolerance": risk_tolerance,
+            "user_risk_profile": risk_tolerance_str,
+            "recommendations": recommendations
+        }), 200
+    except Exception as e:
+        return jsonify({"msg": f"Error getting recommendations: {str(e)}"}), 500
+
+
+@auth_bp.route('/stock-details/<ticker>', methods=['GET'])
+@jwt_required()
+def get_stock_detail(ticker):
+    """Get detailed information about a specific stock"""
+    try:
+        stock_details = get_stock_details(ticker)
+        
+        if not stock_details:
+            return jsonify({"msg": "Stock not found"}), 404
+        
+        return jsonify(stock_details), 200
+    except Exception as e:
+        return jsonify({"msg": f"Error getting stock details: {str(e)}"}), 500
+
+
+@auth_bp.route('/watchlist', methods=['GET'])
+@jwt_required()
+def get_watchlist():
+    """Get user's stock watchlist"""
+    from flask_jwt_extended import get_jwt_identity
+    
+    identity = get_jwt_identity()
+    user_id = int(identity) if identity else None
+    
+    if not user_id:
+        return jsonify({"msg": "Invalid token"}), 401
+    
+    conn = db_utils.get_connection()
+    try:
+        with conn.cursor(dictionary=True) as cur:
+            cur.execute("""
+                SELECT id, stock_ticker, stock_name, current_price, notes, added_at
+                FROM stock_watchlist WHERE user_id=%s
+                ORDER BY added_at DESC
+            """, (user_id,))
+            watchlist = cur.fetchall()
+            
+            # Convert Decimal to float for JSON
+            for item in watchlist:
+                if item.get('current_price'):
+                    item['current_price'] = float(item['current_price'])
+            
+            return jsonify({"watchlist": watchlist}), 200
+    finally:
+        conn.close()
+
+
+@auth_bp.route('/watchlist', methods=['POST'])
+@jwt_required()
+def add_to_watchlist():
+    """Add stock to user's watchlist"""
+    from flask_jwt_extended import get_jwt_identity
+    
+    identity = get_jwt_identity()
+    user_id = int(identity) if identity else None
+    
+    if not user_id:
+        return jsonify({"msg": "Invalid token"}), 401
+    
+    data = request.get_json(silent=True) or {}
+    ticker = data.get('ticker')
+    stock_name = data.get('stock_name')
+    current_price = data.get('current_price')
+    notes = data.get('notes')
+    
+    if not ticker:
+        return jsonify({"msg": "Stock ticker is required"}), 400
+    
+    # Get stock details
+    stock_details = get_stock_details(ticker)
+    if not stock_details:
+        return jsonify({"msg": "Stock not found"}), 404
+    
+    conn = db_utils.get_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("""
+            INSERT INTO stock_watchlist (user_id, stock_ticker, stock_name, current_price, notes)
+            VALUES (%s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                stock_name = VALUES(stock_name),
+                current_price = VALUES(current_price),
+                notes = VALUES(notes)
+        """, (user_id, ticker, stock_name or stock_details['name'], 
+              current_price or stock_details['current_price'], notes))
+        
+        conn.commit()
+        return jsonify({"msg": "Stock added to watchlist"}), 200
+    except mysql.connector.Error as e:
+        conn.rollback()
+        return jsonify({"msg": f"Error adding to watchlist: {str(e)}"}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@auth_bp.route('/watchlist/<int:watchlist_id>', methods=['DELETE'])
+@jwt_required()
+def remove_from_watchlist(watchlist_id):
+    """Remove stock from user's watchlist"""
+    from flask_jwt_extended import get_jwt_identity
+    
+    identity = get_jwt_identity()
+    user_id = int(identity) if identity else None
+    
+    if not user_id:
+        return jsonify({"msg": "Invalid token"}), 401
+    
+    conn = db_utils.get_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("""
+            DELETE FROM stock_watchlist WHERE id=%s AND user_id=%s
+        """, (watchlist_id, user_id))
+        
+        conn.commit()
+        
+        if cursor.rowcount == 0:
+            return jsonify({"msg": "Watchlist item not found"}), 404
+        
+        return jsonify({"msg": "Stock removed from watchlist"}), 200
+    except mysql.connector.Error as e:
+        conn.rollback()
+        return jsonify({"msg": f"Error removing from watchlist: {str(e)}"}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
 
 # blocklist check to jwtmanager
 def attach_blocklist_checker(jwt_manager):

@@ -60,7 +60,7 @@ export default function Login() {
         window.google.accounts.id.renderButton(googleButtonRef.current, {
           theme: 'outline',
           size: 'large',
-          width: 300,
+          width: '100%',
           text: 'signin_with',
         });
       }
@@ -234,7 +234,9 @@ export default function Login() {
             <span>or continue with</span>
           </div>
 
-          <div ref={googleButtonRef}></div>
+          <div id="google-signin-button-container" style={{ width: '100%' }}>
+            <div ref={googleButtonRef}></div>
+          </div>
         </form>
       </AuthCard>
     </div>

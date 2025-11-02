@@ -30,8 +30,7 @@ const Navbar: React.FC = () => {
   };
 
   const handleEditProfile = () => {
-    // TODO: Implement edit profile functionality
-    console.log('Edit profile clicked');
+    navigate('/settings');
     setIsDropdownOpen(false);
   };
 
@@ -128,7 +127,9 @@ const Navbar: React.FC = () => {
           <div className="nav-right">
             <nav>
               <Link to="/dashboard">Dashboard</Link>
+              <Link to="/investments">Investments</Link>
               <Link to="/planner">Planner</Link>
+              <Link to="/settings">Settings</Link>
             </nav>
         
         <div className="user-profile" ref={dropdownRef}>

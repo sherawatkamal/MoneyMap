@@ -1829,8 +1829,122 @@
   width: 100% !important;
 }
 
+#google-signin-button-container > div > div > iframe {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
 /* Google Sign-In Button Full Width */
 iframe[id^="credential"] {
   width: 100% !important;
   max-width: 100% !important;
+}
+
+/* Settings Page Styles */
+.settings-page {
+  padding: 2rem;
+  min-height: calc(100vh - 80px);
+  background: var(--bg-primary);
+}
+
+.settings-header {
+  margin-bottom: 3rem;
+}
+
+.settings-header h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: var(--bg-gradient-alt);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+.settings-header p {
+  margin-top: 0.5rem;
+}
+
+.settings-section {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: var(--radius-xl);
+  padding: 2.5rem;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-light);
+}
+
+.section-header {
+  margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+  color: var(--text-primary);
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+}
+
+.section-header p {
+  margin: 0;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-start;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.form-actions button {
+  width: auto;
+}
+
+.settings-page .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.settings-page .form-group small {
+  display: block;
+  margin-top: 0.5rem;
+}
+
+.settings-page textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: var(--transition);
+  background: var(--bg-primary);
+}
+
+.settings-page textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+@media (max-width: 768px) {
+  .settings-page {
+    padding: 1rem;
+  }
+  
+  .settings-header h1 {
+    font-size: 2rem;
+  }
+  
+  .settings-section {
+    padding: 1.5rem;
+  }
+  
+  .section-header h2 {
+    font-size: 1.5rem;
+  }
+
+  /* Make profile form fields stack on mobile */
+  .settings-section form > div[style*="grid"] {
+    grid-template-columns: 1fr !important;
+  }
 }

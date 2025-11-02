@@ -85,11 +85,11 @@ export default function Dashboard() {
             <p>Create a detailed financial plan based on your goals</p>
           </Link>
           
-          <div className="action-card coming-soon">
+          <Link to="/investments" className="action-card">
             <div className="action-icon">📈</div>
-            <h3>Investment Tracker</h3>
-            <p>Coming soon - Track your investments</p>
-          </div>
+            <h3>Investment Recommendations</h3>
+            <p>AI-powered stock suggestions based on your risk profile</p>
+          </Link>
           
           <div className="action-card coming-soon">
             <div className="action-icon">💳</div>

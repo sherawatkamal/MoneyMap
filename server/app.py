@@ -7,6 +7,7 @@ import os
 from dotenv import load_dotenv
 import db_utils
 from auth_system import auth_bp, attach_blocklist_checker
+from exports import exports_bp
 
 load_dotenv()
 db_utils.initialize_database()
@@ -28,6 +29,7 @@ attach_blocklist_checker(jwt)
 
 # Register the auth blueprint
 app.register_blueprint(auth_bp, url_prefix='/')
+app.register_blueprint(exports_bp)
 
 @app.route('/api/health', methods=['GET'])
 def health_check():

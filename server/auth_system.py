@@ -371,7 +371,13 @@ def get_user_preferences():
             "monthly_expenses": None,
             "emergency_fund_target": None,
             "monthly_contribution": None,
-            "emergency_goal": None
+            "emergency_goal": None,
+            "budget_housing_percent": None,
+            "budget_food_percent": None,
+            "budget_transportation_percent": None,
+            "budget_utilities_percent": None,
+            "budget_entertainment_percent": None,
+            "budget_other_percent": None
         }), 200
     
     # Convert Decimal to float for JSON serialization
@@ -399,6 +405,14 @@ def get_user_preferences():
     
     result['emergency_goal'] = preferences.get('emergency_goal')
     
+    # Budget breakdown fields
+    for field in ['budget_housing_percent', 'budget_food_percent', 'budget_transportation_percent', 
+                  'budget_utilities_percent', 'budget_entertainment_percent', 'budget_other_percent']:
+        if preferences.get(field) is not None:
+            result[field] = float(preferences[field])
+        else:
+            result[field] = None
+    
     return jsonify(result), 200
 
 
@@ -420,6 +434,14 @@ def update_user_preferences():
     emergency_fund_target = data.get('emergency_fund_target')
     monthly_contribution = data.get('monthly_contribution')
     emergency_goal = data.get('emergency_goal')
+    current_savings = data.get('current_savings')
+    monthly_expenses = data.get('monthly_expenses')
+    budget_housing_percent = data.get('budget_housing_percent')
+    budget_food_percent = data.get('budget_food_percent')
+    budget_transportation_percent = data.get('budget_transportation_percent')
+    budget_utilities_percent = data.get('budget_utilities_percent')
+    budget_entertainment_percent = data.get('budget_entertainment_percent')
+    budget_other_percent = data.get('budget_other_percent')
     
     # Validate and convert values
     try:
@@ -432,6 +454,30 @@ def update_user_preferences():
             monthly_contribution = float(monthly_contribution)
             if monthly_contribution < 0:
                 return jsonify({"msg": "Monthly contribution cannot be negative"}), 400
+        
+        # Validate current_savings and monthly_expenses
+        if current_savings is not None:
+            current_savings = float(current_savings)
+            if current_savings < 0:
+                return jsonify({"msg": "Current savings cannot be negative"}), 400
+        
+        if monthly_expenses is not None:
+            monthly_expenses = float(monthly_expenses)
+            if monthly_expenses < 0:
+                return jsonify({"msg": "Monthly expenses cannot be negative"}), 400
+        
+        # Validate budget percentages
+        budget_fields = [
+            budget_housing_percent, budget_food_percent, budget_transportation_percent,
+            budget_utilities_percent, budget_entertainment_percent, budget_other_percent
+        ]
+        
+        for field in budget_fields:
+            if field is not None:
+                val = float(field)
+                if val < 0 or val > 100:
+                    return jsonify({"msg": "Budget percentages must be between 0 and 100"}), 400
+        
     except (ValueError, TypeError):
         return jsonify({"msg": "Invalid number format"}), 400
     
@@ -440,7 +486,15 @@ def update_user_preferences():
             user_id=user_id,
             emergency_fund_target=emergency_fund_target,
             monthly_contribution=monthly_contribution,
-            emergency_goal=emergency_goal
+            emergency_goal=emergency_goal,
+            current_savings=current_savings,
+            monthly_expenses=monthly_expenses,
+            budget_housing_percent=budget_housing_percent,
+            budget_food_percent=budget_food_percent,
+            budget_transportation_percent=budget_transportation_percent,
+            budget_utilities_percent=budget_utilities_percent,
+            budget_entertainment_percent=budget_entertainment_percent,
+            budget_other_percent=budget_other_percent
         )
         
         return jsonify({"msg": "Preferences updated successfully"}), 200
@@ -693,6 +747,102 @@ def remove_from_watchlist(watchlist_id):
         cursor.close()
         conn.close()
 
+
+@auth_bp.route('/update-risk-tolerance', methods=['POST'])
+@jwt_required()
+def update_risk_tolerance():
+    """Update user's risk tolerance"""
+    try:
+        claims = get_jwt()
+        user_id = claims.get('user_id')
+        
+        data = request.get_json()
+        risk_tolerance = data.get('risk_tolerance')
+        
+        if risk_tolerance is None or not (1 <= risk_tolerance <= 10):
+            return jsonify({"msg": "Risk tolerance must be between 1 and 10"}), 400
+        
+        conn = db_utils.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            UPDATE users SET risk_tolerance=%s WHERE id=%s
+        """, (risk_tolerance, user_id))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"msg": "Risk tolerance updated successfully", "risk_tolerance": risk_tolerance}), 200
+    except Exception as e:
+        return jsonify({"msg": f"Error updating risk tolerance: {str(e)}"}), 500
+
+@auth_bp.route('/update-stock-prices', methods=['GET'])
+@jwt_required()
+def update_stock_prices():
+    """Update stock prices with simulated real-time data"""
+    try:
+        claims = get_jwt()
+        user_id = claims.get('user_id')
+        
+        # Get user's risk tolerance to fetch recommendations
+        conn = db_utils.get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        cursor.execute("SELECT risk_tolerance FROM users WHERE id=%s", (user_id,))
+        user = cursor.fetchone()
+        risk_tolerance = user.get('risk_tolerance', 5) if user else 5
+        
+        cursor.close()
+        conn.close()
+        
+        # Get current recommendations
+        recommendations = get_recommendations(risk_tolerance)
+        
+        # Simulate price updates (in production, this would fetch from real API)
+        import random
+        updated_prices = []
+        for stock in recommendations:
+            # Simulate small price changes (-5% to +5%)
+            price_change_factor = 1 + (random.random() - 0.5) * 0.1
+            new_price = stock['current_price'] * price_change_factor
+            updated_prices.append({
+                'ticker': stock['ticker'],
+                'current_price': round(new_price, 2),
+                'previous_price': stock['current_price']
+            })
+        
+        return jsonify({"prices": updated_prices}), 200
+    except Exception as e:
+        return jsonify({"msg": f"Error updating prices: {str(e)}"}), 500
+
+@auth_bp.route('/stock-details/<ticker>', methods=['GET'])
+@jwt_required()
+def get_stock_details_endpoint(ticker):
+    """Get detailed stock information including price history"""
+    try:
+        stock_details = get_stock_details(ticker.upper())
+        
+        if not stock_details:
+            return jsonify({"msg": "Stock not found"}), 404
+        
+        # Generate price history for risk calculation
+        import random
+        price_history = []
+        base_price = stock_details['current_price']
+        volatility = stock_details.get('volatility', 0.2)
+        
+        for i in range(30, -1, -1):
+            days_ago = i
+            random_change = (random.random() - 0.5) * 2 * volatility
+            price = base_price * (1 - (days_ago / 30) * 0.1) * (1 + random_change)
+            price_history.append(round(max(price * 0.7, price * 1.3), 2))
+        
+        stock_details['price_history'] = price_history
+        
+        return jsonify(stock_details), 200
+    except Exception as e:
+        return jsonify({"msg": f"Error fetching stock details: {str(e)}"}), 500
 
 # blocklist check to jwtmanager
 def attach_blocklist_checker(jwt_manager):

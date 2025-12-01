@@ -9,7 +9,11 @@ import Dashboard from './pages/Dashboard';
 import Settings from './pages/Settings';
 import FinancialVisualization from './pages/FinancialVisualization';
 import Investments from './pages/Investments';
+import RiskAssessment from './pages/RiskAssessment';
+import FundAllocation from './pages/FundAllocation';
+import ScenarioComparison from './pages/ScenarioComparison';
 import Navbar from './components/Navbar';
+import Toast from './components/Toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Simple types (kept to preserve existing planner)
@@ -169,9 +173,62 @@ const Recommendations: React.FC<{
   const monthlySurplus = data.monthlyIncome - data.monthlyExpenses;
   const emergencyFund = data.monthlyExpenses * 6; // 6 months
   const availableForInvestment = data.currentSavings - emergencyFund;
+  
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+
+  const generatePDF = () => {
+    window.print();
+    setToastMessage('PDF generation triggered!');
+    setToastType('success');
+    setShowToast(true);
+  };
+
+  const generateCSV = () => {
+    const csvData = [
+      ['Financial Plan - Export Date: ' + new Date().toLocaleDateString()],
+      [''],
+      ['Financial Overview'],
+      ['Category', 'Amount'],
+      ['Current Savings', `$${data.currentSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+      ['Monthly Income', `$${data.monthlyIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+      ['Monthly Expenses', `$${data.monthlyExpenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+      ['Monthly Surplus', `$${monthlySurplus.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+      [''],
+      ['Recommendations'],
+      ['Category', 'Amount', 'Description'],
+      ['Emergency Fund Target', `$${emergencyFund.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Keep 6 months of expenses in a high-yield savings account'],
+      ['Available for Investment', `$${Math.max(0, availableForInvestment).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Invest in a diversified portfolio'],
+      ['Monthly Investment', `$${Math.max(0, monthlySurplus).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Set up automatic monthly transfers']
+    ];
+
+    const csvContent = csvData.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `financial-plan-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    setToastMessage('Financial plan exported to CSV successfully!');
+    setToastType('success');
+    setShowToast(true);
+  };
 
   return (
     <div className="recommendations-container fade-in">
+      {showToast && (
+        <Toast
+          message={toastMessage}
+          type={toastType}
+          onClose={() => setShowToast(false)}
+        />
+      )}
       <div style={{textAlign: 'center', marginBottom: '3rem'}}>
         <div style={{
           width: '100px',
@@ -299,12 +356,15 @@ const Recommendations: React.FC<{
         </div>
       </div>
 
-      <div className="actions">
+      <div className="action-buttons-container">
         <button onClick={onBack} className="btn-secondary">
           ← Back to Form
         </button>
-        <button className="btn-primary" style={{background: 'var(--bg-gradient-alt)'}}>
-          📄 Export Plan
+        <button onClick={generatePDF} className="btn-export-pdf">
+          📄 Export PDF
+        </button>
+        <button onClick={generateCSV} className="btn-export-csv">
+          📊 Export CSV
         </button>
       </div>
     </div>
@@ -508,6 +568,30 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <Investments />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/risk-assessment" 
+          element={
+            <ProtectedRoute>
+              <RiskAssessment />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/fund-allocation" 
+          element={
+            <ProtectedRoute>
+              <FundAllocation />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/scenario-comparison" 
+          element={
+            <ProtectedRoute>
+              <ScenarioComparison />
             </ProtectedRoute>
           } 
         />

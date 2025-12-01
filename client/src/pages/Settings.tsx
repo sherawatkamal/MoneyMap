@@ -6,6 +6,12 @@ interface Preferences {
   emergency_fund_target: number | null;
   monthly_contribution: number | null;
   emergency_goal: string | null;
+  budget_housing_percent: number | null;
+  budget_food_percent: number | null;
+  budget_transportation_percent: number | null;
+  budget_utilities_percent: number | null;
+  budget_entertainment_percent: number | null;
+  budget_other_percent: number | null;
 }
 
 interface Profile {
@@ -27,6 +33,12 @@ export default function Settings() {
     emergency_fund_target: null,
     monthly_contribution: null,
     emergency_goal: null,
+    budget_housing_percent: null,
+    budget_food_percent: null,
+    budget_transportation_percent: null,
+    budget_utilities_percent: null,
+    budget_entertainment_percent: null,
+    budget_other_percent: null,
   });
   const [profile, setProfile] = useState<Profile>({
     full_name: '',
@@ -243,7 +255,7 @@ export default function Settings() {
           </div>
 
           <form onSubmit={handleProfileSubmit} style={{ marginTop: '2rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <div className="settings-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
               <div className="form-group">
                 <label htmlFor="fullName">
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -278,7 +290,7 @@ export default function Settings() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <div className="settings-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
               <div className="form-group">
                 <label htmlFor="phone">
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -312,7 +324,7 @@ export default function Settings() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <div className="settings-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
               <div className="form-group">
                 <label htmlFor="occupation">
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -346,7 +358,7 @@ export default function Settings() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <div className="settings-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
               <div className="form-group">
                 <label htmlFor="currentSavings">
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -385,7 +397,7 @@ export default function Settings() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <div className="settings-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
               <div className="form-group">
                 <label htmlFor="financialGoal">
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -574,6 +586,181 @@ export default function Settings() {
               </p>
             </div>
           )}
+        </div>
+
+        {/* Budget Breakdown Preferences Section */}
+        <div className="settings-section">
+          <div className="section-header">
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span style={{ fontSize: '1.5rem' }}>📊</span>
+              Budget Breakdown Preferences
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+              Customize how your monthly expenses are distributed across categories (percentages should total to 100%)
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} style={{ marginTop: '2rem' }}>
+            <div className="settings-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className="form-group">
+                <label htmlFor="housingPercent">
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    🏠 Housing (%)
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  id="housingPercent"
+                  value={preferences.budget_housing_percent || ''}
+                  onChange={(e) => handleInputChange('budget_housing_percent', parseFloat(e.target.value) || null)}
+                  placeholder="30"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="foodPercent">
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    🍔 Food (%)
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  id="foodPercent"
+                  value={preferences.budget_food_percent || ''}
+                  onChange={(e) => handleInputChange('budget_food_percent', parseFloat(e.target.value) || null)}
+                  placeholder="15"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="transportationPercent">
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    🚗 Transportation (%)
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  id="transportationPercent"
+                  value={preferences.budget_transportation_percent || ''}
+                  onChange={(e) => handleInputChange('budget_transportation_percent', parseFloat(e.target.value) || null)}
+                  placeholder="15"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="utilitiesPercent">
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    ⚡ Utilities (%)
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  id="utilitiesPercent"
+                  value={preferences.budget_utilities_percent || ''}
+                  onChange={(e) => handleInputChange('budget_utilities_percent', parseFloat(e.target.value) || null)}
+                  placeholder="10"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="entertainmentPercent">
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    🎬 Entertainment (%)
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  id="entertainmentPercent"
+                  value={preferences.budget_entertainment_percent || ''}
+                  onChange={(e) => handleInputChange('budget_entertainment_percent', parseFloat(e.target.value) || null)}
+                  placeholder="10"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="otherPercent">
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    📦 Other (%)
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  id="otherPercent"
+                  value={preferences.budget_other_percent || ''}
+                  onChange={(e) => handleInputChange('budget_other_percent', parseFloat(e.target.value) || null)}
+                  placeholder="20"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                />
+              </div>
+            </div>
+
+            {/* Calculate and display total */}
+            {(() => {
+              const total = [
+                preferences.budget_housing_percent,
+                preferences.budget_food_percent,
+                preferences.budget_transportation_percent,
+                preferences.budget_utilities_percent,
+                preferences.budget_entertainment_percent,
+                preferences.budget_other_percent
+              ].reduce((sum, val) => sum + (val || 0), 0);
+              
+              return (
+                <div style={{
+                  marginTop: '1.5rem',
+                  padding: '1rem',
+                  background: total === 100 ? 'rgba(16, 185, 129, 0.1)' : total > 100 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(251, 191, 36, 0.1)',
+                  border: total === 100 ? '2px solid rgba(16, 185, 129, 0.2)' : total > 100 ? '2px solid rgba(239, 68, 68, 0.2)' : '2px solid rgba(251, 191, 36, 0.2)',
+                  borderRadius: 'var(--radius-lg)',
+                  textAlign: 'center'
+                }}>
+                  <strong style={{ 
+                    color: total === 100 ? 'var(--success-color)' : total > 100 ? '#ef4444' : '#fbbf24',
+                    fontSize: '1.1rem'
+                  }}>
+                    Total: {total.toFixed(1)}%
+                  </strong>
+                  {total !== 100 && (
+                    <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', fontSize: '0.9rem' }}>
+                      {total > 100 ? 'Total exceeds 100%. Please adjust the percentages.' : total < 100 && 'Total is less than 100%. You may want to distribute the remaining percentage.'}
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
+
+            <div className="form-actions">
+              <button
+                type="submit"
+                disabled={saving}
+                className={saving ? 'btn-disabled' : 'btn-primary'}
+                style={{
+                  background: saving ? '' : 'var(--bg-gradient-alt)',
+                  border: 'none',
+                  minWidth: '150px',
+                }}
+              >
+                {saving ? 'Saving...' : '💾 Save Budget Preferences'}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

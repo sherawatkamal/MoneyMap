@@ -254,10 +254,20 @@ def get_recommendations(risk_tolerance: int) -> List[Dict]:
     # Get stocks from appropriate category
     stocks = STOCK_DATA.get(category, [])
     
-    # Add calculated predictions to each stock
+    # Add calculated predictions and category to each stock
     for stock in stocks:
         stock['predicted_return_1yr'] = predict_returns(stock)
         stock['risk_score'] = calculate_risk_score(stock)
+        # Add category (stocks, bonds, etf, crypto)
+        ticker = stock.get('ticker', '')
+        if ticker in ['BTC', 'ETH'] or 'Bitcoin' in stock.get('name', '') or 'Ethereum' in stock.get('name', ''):
+            stock['category'] = 'crypto'
+        elif 'ETF' in stock.get('name', '') or ticker in ['SPY', 'VTI', 'VXUS', 'BND']:
+            stock['category'] = 'etf'
+        elif stock.get('sector', '') == 'Bonds' or 'Bond' in stock.get('name', ''):
+            stock['category'] = 'bonds'
+        else:
+            stock['category'] = 'stocks'
     
     # Sort by predicted returns (highest first)
     stocks.sort(key=lambda x: x['predicted_return_1yr'], reverse=True)
@@ -285,7 +295,15 @@ def get_stock_details(ticker: str) -> Dict:
     
     for stock in all_stocks:
         if stock['ticker'].upper() == ticker.upper():
-            stock['category'] = categorize_stock(stock['beta'], stock['volatility'])
+            # Add category
+            if ticker.upper() in ['BTC', 'ETH'] or 'Bitcoin' in stock.get('name', '') or 'Ethereum' in stock.get('name', ''):
+                stock['category'] = 'crypto'
+            elif 'ETF' in stock.get('name', '') or ticker.upper() in ['SPY', 'VTI', 'VXUS', 'BND']:
+                stock['category'] = 'etf'
+            elif stock.get('sector', '') == 'Bonds' or 'Bond' in stock.get('name', ''):
+                stock['category'] = 'bonds'
+            else:
+                stock['category'] = 'stocks'
             return stock
     
     return None

@@ -346,6 +346,12 @@ def initialize_database():
                 emergency_fund_target DECIMAL(15,2),
                 monthly_contribution DECIMAL(15,2),
                 emergency_goal VARCHAR(255),
+                budget_housing_percent DECIMAL(5,2),
+                budget_food_percent DECIMAL(5,2),
+                budget_transportation_percent DECIMAL(5,2),
+                budget_utilities_percent DECIMAL(5,2),
+                budget_entertainment_percent DECIMAL(5,2),
+                budget_other_percent DECIMAL(5,2),
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
@@ -395,6 +401,25 @@ def initialize_database():
                     if e.errno != 1060:  # Duplicate column name error
                         print(f"Error adding monthly_expenses column: {e}")
             
+            # Check if budget breakdown columns exist
+            budget_columns = [
+                'budget_housing_percent', 'budget_food_percent', 
+                'budget_transportation_percent', 'budget_utilities_percent',
+                'budget_entertainment_percent', 'budget_other_percent'
+            ]
+            
+            for col in budget_columns:
+                cursor.execute(f"SHOW COLUMNS FROM user_preferences LIKE '{col}'")
+                has_col = cursor.fetchone()
+                
+                if not has_col:
+                    try:
+                        cursor.execute(f"ALTER TABLE user_preferences ADD COLUMN {col} DECIMAL(5,2)")
+                        print(f"Added {col} column to user_preferences table")
+                    except mysql.connector.Error as e:
+                        if e.errno != 1060:  # Duplicate column name error
+                            print(f"Error adding {col} column: {e}")
+            
             # Check if stock_watchlist table exists
             cursor.execute("SHOW TABLES LIKE 'stock_watchlist'")
             has_watchlist = cursor.fetchone()
@@ -440,7 +465,10 @@ def get_user_preferences(user_id):
         with conn.cursor(dictionary=True) as cur:
             cur.execute("""
                 SELECT current_savings, monthly_expenses, emergency_fund_target, 
-                       monthly_contribution, emergency_goal
+                       monthly_contribution, emergency_goal,
+                       budget_housing_percent, budget_food_percent,
+                       budget_transportation_percent, budget_utilities_percent,
+                       budget_entertainment_percent, budget_other_percent
                 FROM user_preferences WHERE user_id=%s
             """, (user_id,))
             return cur.fetchone()
@@ -475,7 +503,11 @@ def create_user_preferences(user_id, current_savings=None, monthly_expenses=None
         conn.close()
 
 
-def update_user_preferences(user_id, emergency_fund_target=None, monthly_contribution=None, emergency_goal=None, current_savings=None, monthly_expenses=None):
+def update_user_preferences(user_id, emergency_fund_target=None, monthly_contribution=None, emergency_goal=None, 
+                           current_savings=None, monthly_expenses=None,
+                           budget_housing_percent=None, budget_food_percent=None,
+                           budget_transportation_percent=None, budget_utilities_percent=None,
+                           budget_entertainment_percent=None, budget_other_percent=None):
     """
     Update user preferences. Creates row if it doesn't exist.
     """
@@ -512,6 +544,30 @@ def update_user_preferences(user_id, emergency_fund_target=None, monthly_contrib
                 updates.append("monthly_expenses=%s")
                 values.append(monthly_expenses)
             
+            if budget_housing_percent is not None:
+                updates.append("budget_housing_percent=%s")
+                values.append(budget_housing_percent)
+            
+            if budget_food_percent is not None:
+                updates.append("budget_food_percent=%s")
+                values.append(budget_food_percent)
+            
+            if budget_transportation_percent is not None:
+                updates.append("budget_transportation_percent=%s")
+                values.append(budget_transportation_percent)
+            
+            if budget_utilities_percent is not None:
+                updates.append("budget_utilities_percent=%s")
+                values.append(budget_utilities_percent)
+            
+            if budget_entertainment_percent is not None:
+                updates.append("budget_entertainment_percent=%s")
+                values.append(budget_entertainment_percent)
+            
+            if budget_other_percent is not None:
+                updates.append("budget_other_percent=%s")
+                values.append(budget_other_percent)
+            
             if updates:
                 values.append(user_id)
                 cursor.execute(
@@ -521,9 +577,13 @@ def update_user_preferences(user_id, emergency_fund_target=None, monthly_contrib
         else:
             # Insert new preferences
             cursor.execute("""
-                INSERT INTO user_preferences (user_id, emergency_fund_target, monthly_contribution, emergency_goal, current_savings, monthly_expenses)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (user_id, emergency_fund_target, monthly_contribution, emergency_goal, current_savings, monthly_expenses))
+                INSERT INTO user_preferences (user_id, emergency_fund_target, monthly_contribution, emergency_goal, 
+                current_savings, monthly_expenses, budget_housing_percent, budget_food_percent,
+                budget_transportation_percent, budget_utilities_percent, budget_entertainment_percent, budget_other_percent)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (user_id, emergency_fund_target, monthly_contribution, emergency_goal, current_savings, monthly_expenses,
+                 budget_housing_percent, budget_food_percent, budget_transportation_percent,
+                 budget_utilities_percent, budget_entertainment_percent, budget_other_percent))
         
         conn.commit()
         return True

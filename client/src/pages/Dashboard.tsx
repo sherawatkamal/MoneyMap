@@ -79,14 +79,20 @@ export default function Dashboard() {
       <div className="quick-actions">
         <h2>Quick Actions</h2>
         <div className="actions-grid">
-          <Link to="/planner" className="action-card">
+          <Link to="/visualization" className="action-card">
             <div className="action-icon">📊</div>
+            <h3>Financial Dashboard</h3>
+            <p>Visualize your financial health and track progress</p>
+          </Link>
+          
+          <Link to="/planner" className="action-card">
+            <div className="action-icon">📈</div>
             <h3>Financial Planner</h3>
             <p>Create a detailed financial plan based on your goals</p>
           </Link>
           
           <Link to="/investments" className="action-card">
-            <div className="action-icon">📈</div>
+            <div className="action-icon">💼</div>
             <h3>Investment Recommendations</h3>
             <p>AI-powered stock suggestions based on your risk profile</p>
           </Link>

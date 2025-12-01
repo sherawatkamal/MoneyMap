@@ -438,6 +438,161 @@
   opacity: 0.6;
 }
 
+/* Enhanced Button Styles for Financial Actions */
+.btn-financial-planner {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: var(--radius-lg);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+}
+
+.btn-financial-planner::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-financial-planner:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-financial-planner:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgba(16, 185, 129, 0.4);
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.btn-financial-planner:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.btn-export-pdf {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: var(--radius-lg);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+}
+
+.btn-export-pdf::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-export-pdf:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-export-pdf:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgba(239, 68, 68, 0.4);
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.btn-export-pdf:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.btn-export-csv {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: var(--radius-lg);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+}
+
+.btn-export-csv::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-export-csv:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-export-csv:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.btn-export-csv:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* Action Buttons Container */
+.action-buttons-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.action-buttons-container button {
+  min-width: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  letter-spacing: 0.5px;
+}
+
+.action-buttons-container button::after {
+  display: none;
+}
+
 /* Auth Pages */
 .auth-page {
   min-height: calc(100vh - 80px);
@@ -1790,6 +1945,221 @@
   .action-card {
     padding: 1.5rem;
   }
+
+  /* Financial Visualization Responsive */
+  .dashboard-page {
+    padding: 1rem !important;
+  }
+
+  /* Hide Y-axis labels on small screens for chart */
+  .chart-y-axis {
+    display: none !important;
+  }
+
+  .chart-bars-container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  /* Make emergency fund circle smaller on mobile */
+  .emergency-fund-circle {
+    width: 150px !important;
+    height: 150px !important;
+  }
+
+  .emergency-fund-circle svg,
+  .emergency-fund-svg {
+    width: 150px !important;
+    height: 150px !important;
+  }
+
+  /* Smaller percentage text on mobile */
+  .emergency-fund-percentage {
+    font-size: 2rem !important;
+  }
+
+  /* Adjust risk slider section padding */
+  .risk-slider-section {
+    padding: 1rem !important;
+  }
+
+  /* Stack header info on mobile */
+  .dashboard-header {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  /* Smaller font sizes for metrics on mobile */
+  .metric-value {
+    font-size: 1.5rem !important;
+  }
+
+  .metric-icon {
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 1.5rem !important;
+  }
+
+  /* Adjust budget breakdown text */
+  .budget-category-row {
+    flex-wrap: wrap;
+  }
+
+  .budget-category-row > span:first-child {
+    margin-bottom: 0.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Even smaller adjustments for very small screens */
+  .dashboard-page {
+    padding: 0.5rem !important;
+  }
+
+  .emergency-fund-circle {
+    width: 120px !important;
+    height: 120px !important;
+  }
+
+  .emergency-fund-circle svg,
+  .emergency-fund-svg {
+    width: 120px !important;
+    height: 120px !important;
+  }
+
+  /* Even smaller percentage text on very small screens */
+  .emergency-fund-percentage {
+    font-size: 1.5rem !important;
+  }
+
+  /* Smaller font sizes */
+  h1 {
+    font-size: 2rem !important;
+  }
+
+  h2 {
+    font-size: 1.5rem !important;
+  }
+
+  h3 {
+    font-size: 1.25rem !important;
+  }
+
+  .metric-value {
+    font-size: 1.25rem !important;
+  }
+
+  /* Action buttons stack better */
+  .action-buttons-container {
+    flex-direction: column;
+  }
+
+  .action-buttons-container button {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Chart bars need more space */
+  .chart-bars-container {
+    padding: 0 0.5rem !important;
+  }
+
+  /* Reduce padding in cards */
+  .chart-card, .metric-card {
+    padding: 1rem !important;
+  }
+
+  /* Make risk profile text smaller */
+  .risk-profile-container {
+    padding: 1rem !important;
+  }
+
+  .risk-profile-container h4 {
+    font-size: 1rem !important;
+  }
+
+  .risk-profile-container p {
+    font-size: 0.85rem !important;
+  }
+
+  /* Investment projection chart adjustments */
+  .projection-header {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+
+  .projection-chart-container {
+    margin: -1.5rem 0 0 0;
+    overflow-x: auto;
+  }
+
+  /* Fix chart overflow on very small screens */
+  .projection-chart-inner {
+    min-width: 400px;
+  }
+
+  /* Disclaimer sections on mobile */
+  .projection-disclaimer-container {
+    padding: 1rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  .projection-disclaimer-warning {
+    padding: 0.75rem !important;
+  }
+
+  .disclaimer-list {
+    padding-left: 1.25rem !important;
+    line-height: 1.6 !important;
+  }
+
+  .disclaimer-list li {
+    margin-bottom: 0.5rem !important;
+    font-size: 0.85rem !important;
+  }
+
+  .projection-disclaimer-advice {
+    padding: 0.75rem !important;
+    font-size: 0.85rem !important;
+  }
+
+  /* Investments page responsive */
+  .investments-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .investment-stock-card {
+    min-width: auto !important;
+  }
+
+  .investment-stock-details-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+}
+
+/* Additional responsive tweaks for Investments page */
+@media (max-width: 768px) {
+  /* Make stock details grid single column on tablets */
+  .investment-stock-details-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Chart containers responsive */
+  .chart-card {
+    padding: 1rem;
+  }
+
+  /* Recharts responsive adjustments */
+  .recharts-wrapper {
+    width: 100% !important;
+  }
+
+  .recharts-surface {
+    width: 100% !important;
+  }
 }
 
 /* Google Sign-In Divider */
@@ -1945,6 +2315,16 @@ iframe[id^="credential"] {
 
   /* Make profile form fields stack on mobile */
   .settings-section form > div[style*="grid"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Make all settings form grids stack on mobile */
+  .settings-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Budget breakdown grid responsive */
+  .budget-breakdown-grid {
     grid-template-columns: 1fr !important;
   }
 }

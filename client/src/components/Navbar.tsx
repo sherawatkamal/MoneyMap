@@ -103,7 +103,7 @@ const Navbar: React.FC = () => {
   // Authenticated navbar with user dropdown
   return (
     <div className="top-nav authenticated">
-      <Link to="/planner" className="brand">
+      <Link to="/dashboard" className="brand">
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -127,9 +127,11 @@ const Navbar: React.FC = () => {
           <div className="nav-right">
             <nav>
               <Link to="/dashboard">Dashboard</Link>
+              <Link to="/risk-assessment">Risk Assessment</Link>
               <Link to="/investments">Investments</Link>
+              <Link to="/fund-allocation">Fund Allocation</Link>
+              <Link to="/scenario-comparison">Compare Scenarios</Link>
               <Link to="/planner">Planner</Link>
-              <Link to="/settings">Settings</Link>
             </nav>
         
         <div className="user-profile" ref={dropdownRef}>

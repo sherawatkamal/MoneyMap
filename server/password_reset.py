@@ -1,3 +1,10 @@
+# password_reset.py
+#
+# Jason Albanus Virginia Tech August 22, 2025
+#
+# Password reset functionality including token generation, email sending, and token validation.
+#
+
 import secrets
 import smtplib
 from email.mime.text import MIMEText

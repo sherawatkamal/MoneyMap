@@ -1,3 +1,10 @@
+// eslint.config.js
+//
+// Kamal Sherawat Virginia Tech August 22, 2025
+//
+// ESLint configuration for TypeScript and React code quality and linting rules.
+//
+
 import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'

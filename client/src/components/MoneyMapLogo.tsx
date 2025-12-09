@@ -1,3 +1,12 @@
+/* MoneyMapLogo.tsx
+
+Kamal Sherawat, JJ Feeney III Virginia Tech August 22, 2025
+
+SVG logo component for MoneyMap application with customizable size and styling,
+featuring dollar sign, chart lines, and investment symbols with visualization elements.
+
+*/
+
 import React from 'react';
 
 interface MoneyMapLogoProps {

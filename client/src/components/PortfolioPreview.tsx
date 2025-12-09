@@ -1,3 +1,12 @@
+/* PortfolioPreview.tsx
+
+JJ Feeney III Virginia Tech August 22, 2025
+
+Portfolio preview component with pie chart visualization showing asset allocation breakdown
+by category (stocks, bonds, ETFs, crypto) with portfolio statistics and validation.
+
+*/
+
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 interface Asset {
@@ -74,11 +83,11 @@ export default function PortfolioPreview({ assets, totalValue }: PortfolioPrevie
         📊 Portfolio Composition Preview
       </h3>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', marginBottom: '2rem' }}>
         {/* Pie Chart */}
         <div>
-          <h4 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>Asset Allocation</h4>
-          <ResponsiveContainer width="100%" height={300}>
+          <h4 style={{ marginBottom: '1.5rem', color: 'var(--text-secondary)', fontSize: '1.1rem', fontWeight: 600 }}>Asset Allocation</h4>
+          <ResponsiveContainer width="100%" height={400}>
             <PieChart>
               <Pie
                 data={chartData}
@@ -86,16 +95,25 @@ export default function PortfolioPreview({ assets, totalValue }: PortfolioPrevie
                 cy="50%"
                 labelLine={false}
                 label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                outerRadius={100}
+                outerRadius={120}
+                innerRadius={40}
                 fill="#8884d8"
                 dataKey="value"
+                paddingAngle={2}
               >
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[entry.category as keyof typeof COLORS]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => [`${value.toFixed(2)}%`, 'Allocation']} />
-              <Legend />
+              <Tooltip 
+                formatter={(value: number) => [`${value.toFixed(2)}%`, 'Allocation']} 
+                contentStyle={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', padding: '10px' }}
+              />
+              <Legend 
+                wrapperStyle={{ paddingTop: '30px' }}
+                iconSize={16}
+                iconType="circle"
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>

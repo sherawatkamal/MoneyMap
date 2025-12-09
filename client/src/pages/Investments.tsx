@@ -1,3 +1,13 @@
+/* Investments.tsx
+
+Kamal Sherawat, JJ Feeney III Virginia Tech August 22, 2025
+
+Investments browsing page with stock search, filtering, real-time price updates,
+risk indicators, and stock recommendation features with watchlist functionality.
+Includes bar charts for expected returns and risk analysis visualization.
+
+*/
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import Toast from '../components/Toast';
@@ -39,7 +49,7 @@ interface WatchlistItem {
 }
 
 export default function Investments() {
-  const { user, token } = useAuth();
+  const { user, token, refreshUser } = useAuth();
   const [stocks, setStocks] = useState<StockRecommendation[]>([]);
   const [filteredStocks, setFilteredStocks] = useState<StockRecommendation[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
@@ -52,6 +62,11 @@ export default function Investments() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStock, setSelectedStock] = useState<StockRecommendation | null>(null);
 
+  // Refresh user data on mount to get latest risk tolerance
+  useEffect(() => {
+    refreshUser();
+  }, []);
+
   useEffect(() => {
     fetchRecommendations();
     fetchWatchlist();
@@ -60,7 +75,7 @@ export default function Investments() {
       updatePrices();
     }, 30000);
     return () => clearInterval(priceInterval);
-  }, []);
+  }, [user?.risk_tolerance]); // Re-fetch when risk tolerance changes
 
   useEffect(() => {
     filterStocks();
@@ -225,6 +240,31 @@ export default function Investments() {
     }
   };
 
+  // Helper function to convert risk_tolerance (string or number) to a number (1-10)
+  const normalizeRiskTolerance = (risk: string | number | null | undefined): number => {
+    if (risk === null || risk === undefined) return 5; // Default
+    
+    // If it's already a number, return it (clamped to 1-10)
+    if (typeof risk === 'number') {
+      return Math.max(1, Math.min(10, risk));
+    }
+    
+    // If it's a string, try to parse it as a number first
+    const numValue = Number(risk);
+    if (!isNaN(numValue)) {
+      return Math.max(1, Math.min(10, numValue));
+    }
+    
+    // If it's a string category, convert to number
+    const riskLower = risk.toLowerCase();
+    if (riskLower === 'conservative') return 3;
+    if (riskLower === 'moderate') return 6;
+    if (riskLower === 'aggressive') return 9;
+    
+    // Default fallback
+    return 5;
+  };
+
   const getRiskCategory = (riskScore: number): string => {
     if (riskScore <= 3) return 'Conservative';
     if (riskScore <= 7) return 'Moderate';
@@ -379,7 +419,14 @@ export default function Investments() {
               borderRadius: 'var(--radius-lg)',
               display: 'inline-block'
             }}>
-              Your Risk Profile: <strong>{user?.risk_tolerance || 'Not set'}</strong>
+              Your Risk Profile: <strong style={{ color: getRiskColor(normalizeRiskTolerance(user?.risk_tolerance)) }}>
+                {user?.risk_tolerance ? getRiskCategory(normalizeRiskTolerance(user?.risk_tolerance)) : 'Not set'}
+              </strong>
+              {user?.risk_tolerance && (
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginLeft: '0.5rem' }}>
+                  ({normalizeRiskTolerance(user?.risk_tolerance)}/10)
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -434,31 +481,45 @@ export default function Investments() {
         {/* Stock Recommendations */}
         {filteredStocks.length > 0 ? (
           <div style={{ marginBottom: '3rem' }}>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '1.5rem', color: 'var(--text-primary)' }}>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '1.5rem', color: 'white' }}>
               📊 Recommended Assets ({filteredStocks.length} found)
             </h2>
             
             {/* Investment Analysis Charts */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', gap: '2rem', marginBottom: '3rem' }}>
               {/* Expected Returns Chart */}
               <div style={{ 
-                padding: '1.5rem', 
+                padding: '2.5rem', 
                 background: 'white', 
                 borderRadius: 'var(--radius-lg)', 
                 boxShadow: 'var(--shadow-md)',
                 border: '2px solid var(--border-light)'
               }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--text-primary)' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem', color: 'var(--text-primary)' }}>
                   📈 Expected Returns
                 </h3>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={stocks.map(s => ({ name: s.ticker, value: s.predicted_return_1yr }))}>
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart 
+                    data={stocks.map(s => ({ name: s.ticker, value: s.predicted_return_1yr }))}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} tick={{ fontSize: 11 }} />
-                    <YAxis label={{ value: 'Return %', angle: -90, position: 'insideLeft' }} />
+                    <XAxis 
+                      dataKey="name" 
+                      angle={-45} 
+                      textAnchor="end" 
+                      height={100} 
+                      tick={{ fontSize: 12 }}
+                      interval={0}
+                    />
+                    <YAxis 
+                      label={{ value: 'Return %', angle: -90, position: 'insideLeft', style: { fontSize: 14 } }} 
+                      tick={{ fontSize: 12 }}
+                      width={60}
+                    />
                     <Tooltip 
                       formatter={(value: number) => [`${value.toFixed(1)}%`, 'Expected Return']}
-                      contentStyle={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}
+                      contentStyle={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', padding: '10px' }}
                     />
                     <Bar dataKey="value" fill="#10b981" radius={[8, 8, 0, 0]} animationDuration={1000} />
                   </BarChart>
@@ -466,24 +527,39 @@ export default function Investments() {
               </div>
 
               {/* Risk vs Return Scatter */}
-              <div style={{ 
-                padding: '1.5rem', 
+            <div style={{
+                padding: '2.5rem', 
                 background: 'white', 
                 borderRadius: 'var(--radius-lg)', 
                 boxShadow: 'var(--shadow-md)',
                 border: '2px solid var(--border-light)'
               }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--text-primary)' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem', color: 'var(--text-primary)' }}>
                   ⚡ Risk Score Analysis
                 </h3>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={stocks.map(s => ({ name: s.ticker, risk: s.risk_score }))}>
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart 
+                    data={stocks.map(s => ({ name: s.ticker, risk: s.risk_score }))}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} tick={{ fontSize: 11 }} />
-                    <YAxis domain={[0, 10]} label={{ value: 'Risk Score (0-10)', angle: -90, position: 'insideLeft' }} />
+                    <XAxis 
+                      dataKey="name" 
+                      angle={-45} 
+                      textAnchor="end" 
+                      height={100} 
+                      tick={{ fontSize: 12 }}
+                      interval={0}
+                    />
+                    <YAxis 
+                      domain={[0, 10]} 
+                      label={{ value: 'Risk Score (0-10)', angle: -90, position: 'insideLeft', style: { fontSize: 14 } }} 
+                      tick={{ fontSize: 12 }}
+                      width={60}
+                    />
                     <Tooltip 
                       formatter={(value: number) => [`${value.toFixed(1)}/10`, 'Risk Score']}
-                      contentStyle={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}
+                      contentStyle={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', padding: '10px' }}
                     />
                     <Bar dataKey="risk" fill="#ef4444" radius={[8, 8, 0, 0]} animationDuration={1000} />
                   </BarChart>
@@ -493,8 +569,8 @@ export default function Investments() {
 
             <div className="investments-grid" style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: '1.5rem'
+              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+              gap: '2rem'
             }}>
               {filteredStocks.map((stock, index) => {
                 const riskFromHistory = stock.price_history ? calculateRiskFromHistory(stock.price_history) : stock.risk_score;

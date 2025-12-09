@@ -1,3 +1,12 @@
+/* ResetPassword.tsx
+
+Kamal Sherawat Virginia Tech August 22, 2025
+
+Password reset confirmation page where users can set a new password using
+a reset token received via email.
+
+*/
+
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import AuthCard from '../components/AuthCard'

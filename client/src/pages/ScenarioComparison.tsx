@@ -1,3 +1,12 @@
+/* ScenarioComparison.tsx
+
+JJ Feeney III Virginia Tech August 22, 2025
+
+Scenario comparison page with interactive line charts comparing conservative, moderate,
+and aggressive investment strategies side-by-side with scenario cards and comparison tables.
+
+*/
+
 import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
@@ -139,19 +148,38 @@ export default function ScenarioComparison() {
         {/* Comparison Chart */}
         <div style={{
           background: 'white',
-          padding: '2rem',
+          padding: '3rem',
           borderRadius: 'var(--radius-lg)',
           boxShadow: 'var(--shadow-md)',
           marginBottom: '2rem'
         }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: 'var(--text-primary)' }}>Side-by-Side Comparison</h2>
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart>
+          <h2 style={{ fontSize: '1.75rem', marginBottom: '2rem', color: 'var(--text-primary)' }}>Side-by-Side Comparison</h2>
+          <ResponsiveContainer width="100%" height={500}>
+            <LineChart
+              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+            >
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="year" label={{ value: 'Years', position: 'insideBottom', offset: -5 }} />
-              <YAxis label={{ value: 'Portfolio Value ($)', angle: -90, position: 'insideLeft' }} />
-              <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, '']} />
-              <Legend />
+              <XAxis 
+                dataKey="year" 
+                label={{ value: 'Years', position: 'insideBottom', offset: -10, style: { fontSize: 14 } }} 
+                tick={{ fontSize: 12 }}
+                interval={Math.max(1, Math.floor(timeHorizon / 10))}
+              />
+              <YAxis 
+                label={{ value: 'Portfolio Value ($)', angle: -90, position: 'insideLeft', style: { fontSize: 14 } }} 
+                tick={{ fontSize: 12 }}
+                width={80}
+                tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+              />
+              <Tooltip 
+                formatter={(value: number) => [`$${value.toLocaleString()}`, '']} 
+                contentStyle={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', padding: '12px' }}
+              />
+              <Legend 
+                wrapperStyle={{ paddingTop: '20px' }}
+                iconSize={16}
+                iconType="line"
+              />
               {scenarios.map((scenario, index) => (
                 <Line
                   key={index}
@@ -161,7 +189,8 @@ export default function ScenarioComparison() {
                   name={scenario.name}
                   stroke={scenario.color}
                   strokeWidth={3}
-                  dot={{ r: 4 }}
+                  dot={{ r: 5 }}
+                  activeDot={{ r: 7 }}
                 />
               ))}
             </LineChart>

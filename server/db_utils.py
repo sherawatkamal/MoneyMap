@@ -1,3 +1,10 @@
+# db_utils.py
+#
+# JJ Feeney III Virginia Tech August 22, 2025
+#
+# Database utility functions for user management, encryption/decryption of sensitive financial data,
+# user preferences, and database initialization with table creation and migration support.
+#
 # helper methods for accessing the db just call get user or add user or whatever
 # inally made by jj added og config  and user functions
 

@@ -1,3 +1,12 @@
+/* FundAllocation.tsx
+
+JJ Feeney III Virginia Tech August 22, 2025
+
+Fund allocation planner with stacked area charts showing growth of emergency fund,
+short-term, medium-term, and long-term buckets over time with interactive controls.
+
+*/
+
 import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Area, AreaChart } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
@@ -13,66 +22,96 @@ interface AllocationPlan {
 
 export default function FundAllocation() {
   const { user, token } = useAuth();
-  const [currentSavings, setCurrentSavings] = useState(50000);
+  // Initialize with user's data if available, otherwise use defaults
+  const [currentSavings, setCurrentSavings] = useState(user?.current_savings || 50000);
   const [monthlyContribution, setMonthlyContribution] = useState(1000);
   const [timeHorizon, setTimeHorizon] = useState(10);
   const [riskTolerance, setRiskTolerance] = useState(user?.risk_tolerance || 5);
   const [allocationData, setAllocationData] = useState<AllocationPlan[]>([]);
 
+  // Update values when user data loads
   useEffect(() => {
+    if (user?.risk_tolerance) {
+      setRiskTolerance(user.risk_tolerance);
+    }
+    if (user?.current_savings) {
+      setCurrentSavings(user.current_savings);
+    }
+  }, [user]);
+
+  // Calculate allocation whenever inputs change
+  useEffect(() => {
+    // Always calculate on mount and when dependencies change
+    // Default risk tolerance of 5 is valid, so calculation will run
     calculateAllocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSavings, monthlyContribution, timeHorizon, riskTolerance]);
 
   const calculateAllocation = () => {
+    // Ensure we have valid inputs
+    const validRiskTolerance = Math.max(1, Math.min(10, riskTolerance || 5));
+    const validSavings = Math.max(0, currentSavings || 0);
+    const validContribution = Math.max(0, monthlyContribution || 0);
+    const validHorizon = Math.max(1, Math.min(30, timeHorizon || 10));
+    
     const data: AllocationPlan[] = [];
     const monthlyExpenses = 3000; // Estimate
     const emergencyFundTarget = monthlyExpenses * 6;
 
-    // Initial allocation
-    let emergencyFund = Math.min(currentSavings * 0.2, emergencyFundTarget);
-    let remaining = currentSavings - emergencyFund;
-
     // Risk-based allocation for remaining funds
-    const stockAllocation = riskTolerance / 10;
+    const stockAllocation = validRiskTolerance / 10;
     const bondAllocation = 1 - stockAllocation;
 
-    let shortTerm = remaining * 0.2 * bondAllocation;
-    let mediumTerm = remaining * 0.3 * (stockAllocation * 0.5 + bondAllocation * 0.5);
-    let longTerm = remaining * 0.5 * stockAllocation;
+    // Growth rates based on risk
+    const emergencyGrowth = 0.02; // 2% for savings
+    const shortTermGrowth = 0.04; // 4% for conservative
+    const mediumTermGrowth = 0.06 + (validRiskTolerance / 10) * 0.02; // 6-8%
+    const longTermGrowth = 0.08 + (validRiskTolerance / 10) * 0.04; // 8-12%
 
-    for (let year = 0; year <= timeHorizon; year++) {
-      const monthlyContrib = year * 12 * monthlyContribution;
-      const totalContributions = currentSavings + monthlyContrib;
+    // Initialize values
+    let emergencyFund = 0;
+    let shortTerm = 0;
+    let mediumTerm = 0;
+    let longTerm = 0;
 
-      // Growth rates based on risk
-      const emergencyGrowth = 0.02; // 2% for savings
-      const shortTermGrowth = 0.04; // 4% for conservative
-      const mediumTermGrowth = 0.06 + (riskTolerance / 10) * 0.02; // 6-8%
-      const longTermGrowth = 0.08 + (riskTolerance / 10) * 0.04; // 8-12%
+    for (let year = 0; year <= validHorizon; year++) {
+      const monthlyContrib = year * 12 * validContribution;
+      const totalContributions = validSavings + monthlyContrib;
 
       if (year === 0) {
+        // Initial allocation for year 0
         emergencyFund = Math.min(totalContributions * 0.2, emergencyFundTarget);
-        remaining = totalContributions - emergencyFund;
+        const remaining = Math.max(0, totalContributions - emergencyFund);
+        
         shortTerm = remaining * 0.2 * bondAllocation;
         mediumTerm = remaining * 0.3 * (stockAllocation * 0.5 + bondAllocation * 0.5);
         longTerm = remaining * 0.5 * stockAllocation;
       } else {
+        // Calculate growth for subsequent years
         emergencyFund = Math.min(
           emergencyFund * (1 + emergencyGrowth) + monthlyContribution * 0.1,
           emergencyFundTarget * (1 + emergencyGrowth * year)
         );
-        shortTerm = shortTerm * (1 + shortTermGrowth) + monthlyContribution * 0.2 * bondAllocation;
-        mediumTerm = mediumTerm * (1 + mediumTermGrowth) + monthlyContribution * 0.3;
-        longTerm = longTerm * (1 + longTermGrowth) + monthlyContribution * 0.5 * stockAllocation;
+        
+        // Ensure values are valid numbers before calculations
+        shortTerm = (shortTerm || 0) * (1 + shortTermGrowth) + monthlyContribution * 0.2 * bondAllocation;
+        mediumTerm = (mediumTerm || 0) * (1 + mediumTermGrowth) + monthlyContribution * 0.3;
+        longTerm = (longTerm || 0) * (1 + longTermGrowth) + monthlyContribution * 0.5 * stockAllocation;
       }
+
+      // Ensure all values are valid numbers
+      emergencyFund = isNaN(emergencyFund) ? 0 : emergencyFund;
+      shortTerm = isNaN(shortTerm) ? 0 : shortTerm;
+      mediumTerm = isNaN(mediumTerm) ? 0 : mediumTerm;
+      longTerm = isNaN(longTerm) ? 0 : longTerm;
 
       data.push({
         year,
-        emergencyFund: Math.round(emergencyFund),
-        shortTerm: Math.round(shortTerm),
-        mediumTerm: Math.round(mediumTerm),
-        longTerm: Math.round(longTerm),
-        total: Math.round(emergencyFund + shortTerm + mediumTerm + longTerm),
+        emergencyFund: Math.round(Math.max(0, emergencyFund)),
+        shortTerm: Math.round(Math.max(0, shortTerm)),
+        mediumTerm: Math.round(Math.max(0, mediumTerm)),
+        longTerm: Math.round(Math.max(0, longTerm)),
+        total: Math.round(Math.max(0, emergencyFund + shortTerm + mediumTerm + longTerm)),
       });
     }
 
@@ -206,25 +245,57 @@ export default function FundAllocation() {
         {/* Growth Chart */}
         <div style={{
           background: 'white',
-          padding: '2rem',
+          padding: '3rem',
           borderRadius: 'var(--radius-lg)',
           boxShadow: 'var(--shadow-md)',
           marginBottom: '2rem'
         }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: 'var(--text-primary)' }}>Portfolio Growth Over Time</h2>
-          <ResponsiveContainer width="100%" height={400}>
-            <AreaChart data={allocationData}>
+          <h2 style={{ fontSize: '1.75rem', marginBottom: '2rem', color: 'var(--text-primary)' }}>Portfolio Growth Over Time</h2>
+          {(() => {
+            // Calculate max total value for Y-axis domain
+            const maxTotal = allocationData.length > 0 
+              ? Math.max(...allocationData.map(d => d.total || 0))
+              : 100000;
+            const yAxisMax = Math.ceil(maxTotal * 1.1); // Add 10% padding
+            
+            return (
+          <ResponsiveContainer width="100%" height={500}>
+            <AreaChart 
+              data={allocationData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+            >
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="year" label={{ value: 'Years', position: 'insideBottom', offset: -5 }} />
-              <YAxis label={{ value: 'Value ($)', angle: -90, position: 'insideLeft' }} />
-              <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, '']} />
-              <Legend />
-              <Area type="monotone" dataKey="emergencyFund" stackId="1" stroke="#10b981" fill="#10b981" fillOpacity={0.6} name="Emergency Fund" />
-              <Area type="monotone" dataKey="shortTerm" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} name="Short-term (3-5 years)" />
-              <Area type="monotone" dataKey="mediumTerm" stackId="1" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.6} name="Medium-term (5-10 years)" />
-              <Area type="monotone" dataKey="longTerm" stackId="1" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.6} name="Long-term (10+ years)" />
+              <XAxis 
+                dataKey="year" 
+                label={{ value: 'Years', position: 'insideBottom', offset: -10, style: { fontSize: 14 } }} 
+                tick={{ fontSize: 12 }}
+                interval={Math.max(1, Math.floor(timeHorizon / 10))}
+              />
+              <YAxis 
+                label={{ value: 'Value ($)', angle: -90, position: 'insideLeft', style: { fontSize: 14 } }} 
+                tick={{ fontSize: 12 }}
+                width={80}
+                    domain={[0, yAxisMax]}
+                    allowDataOverflow={false}
+                tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+              />
+              <Tooltip 
+                formatter={(value: number) => [`$${value.toLocaleString()}`, '']} 
+                contentStyle={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', padding: '12px' }}
+              />
+              <Legend 
+                wrapperStyle={{ paddingTop: '20px' }}
+                iconSize={16}
+                iconType="square"
+              />
+              <Area type="monotone" dataKey="emergencyFund" stackId="1" stroke="#10b981" fill="#10b981" fillOpacity={0.6} name="Emergency Fund" strokeWidth={2} />
+              <Area type="monotone" dataKey="shortTerm" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} name="Short-term (3-5 years)" strokeWidth={2} />
+              <Area type="monotone" dataKey="mediumTerm" stackId="1" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.6} name="Medium-term (5-10 years)" strokeWidth={2} />
+              <Area type="monotone" dataKey="longTerm" stackId="1" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.6} name="Long-term (10+ years)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
+            );
+          })()}
         </div>
 
         {/* Allocation Breakdown Table */}

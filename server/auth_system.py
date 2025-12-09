@@ -1,3 +1,11 @@
+# auth_system.py
+#
+# Jason Albanus Virginia Tech August 22, 2025
+#
+# Authentication system blueprint. Handles user registration, login, logout, password reset,
+# profile management, stock recommendations, and watchlist functionality with JWT token authentication.
+#
+
 from flask import request, jsonify, Blueprint
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt
 import bcrypt

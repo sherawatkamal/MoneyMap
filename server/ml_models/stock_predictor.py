@@ -1,3 +1,11 @@
+# stock_predictor.py
+#
+# Jason Albanus Virginia Tech August 22, 2025
+#
+# ML-powered stock prediction and risk assessment module. Provides stock recommendations
+# based on user risk tolerance and calculates stock details with predicted returns.
+#
+
 """
 ML-powered stock prediction and risk assessment module
 """

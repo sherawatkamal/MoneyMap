@@ -1,3 +1,10 @@
+# test_email.py
+#
+# Jason Albanus Virginia Tech August 22, 2025
+#
+# Simple email test script to verify SMTP configuration for password reset functionality.
+#
+
 #!/usr/bin/env python3
 """
 Simple email test script to verify SMTP configuration

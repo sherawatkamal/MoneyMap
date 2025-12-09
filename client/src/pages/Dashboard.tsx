@@ -1,6 +1,46 @@
+/* Dashboard.tsx
+
+Kamal Sherawat Virginia Tech August 22, 2025
+
+Main user dashboard page displaying user profile overview, risk tolerance summary,
+and navigation links to various financial planning features.
+
+*/
+
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
+
+// Helper function to convert risk_tolerance (string or number) to a number (1-10)
+const normalizeRiskTolerance = (risk: string | number | null | undefined): number => {
+  if (risk === null || risk === undefined) return 5; // Default
+  
+  // If it's already a number, return it (clamped to 1-10)
+  if (typeof risk === 'number') {
+    return Math.max(1, Math.min(10, risk));
+  }
+  
+  // If it's a string, try to parse it as a number first
+  const numValue = Number(risk);
+  if (!isNaN(numValue)) {
+    return Math.max(1, Math.min(10, numValue));
+  }
+  
+  // If it's a string category, convert to number
+  const riskLower = risk.toLowerCase();
+  if (riskLower === 'conservative') return 3;
+  if (riskLower === 'moderate') return 6;
+  if (riskLower === 'aggressive') return 9;
+  
+  // Default fallback
+  return 5;
+};
+
+const getRiskLabel = (risk: number): string => {
+  if (risk <= 3) return 'Conservative';
+  if (risk <= 7) return 'Moderate';
+  return 'Aggressive';
+};
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
@@ -69,7 +109,7 @@ export default function Dashboard() {
           <div className="info-content">
             <h3>Financial Goals</h3>
             <p><strong>Primary Goal:</strong> {user?.financial_goal || 'Not set'}</p>
-            <p><strong>Risk Tolerance:</strong> {user?.risk_tolerance || 'Not set'}</p>
+            <p><strong>Risk Tolerance:</strong> {user?.risk_tolerance ? `${getRiskLabel(normalizeRiskTolerance(user.risk_tolerance))} (${normalizeRiskTolerance(user.risk_tolerance)}/10)` : 'Not set'}</p>
             <p><strong>Emergency Fund Target:</strong> {emergencyFundTarget ? `$${emergencyFundTarget.toLocaleString()}` : 'Calculate after adding income'}</p>
           </div>
         </div>
@@ -79,6 +119,30 @@ export default function Dashboard() {
       <div className="quick-actions">
         <h2>Quick Actions</h2>
         <div className="actions-grid">
+          <Link to="/risk-assessment" className="action-card">
+            <div className="action-icon">🎯</div>
+            <h3>Risk Assessment</h3>
+            <p>Take our questionnaire to determine your risk tolerance</p>
+          </Link>
+          
+          <Link to="/investments" className="action-card">
+            <div className="action-icon">💼</div>
+            <h3>Investment Recommendations</h3>
+            <p>AI-powered stock suggestions based on your risk profile</p>
+          </Link>
+          
+          <Link to="/fund-allocation" className="action-card">
+            <div className="action-icon">💰</div>
+            <h3>Fund Allocation</h3>
+            <p>Plan how to divide your funds across different time horizons</p>
+          </Link>
+          
+          <Link to="/scenario-comparison" className="action-card">
+            <div className="action-icon">⚖️</div>
+            <h3>Compare Scenarios</h3>
+            <p>Visualize conservative vs aggressive investment strategies</p>
+          </Link>
+          
           <Link to="/visualization" className="action-card">
             <div className="action-icon">📊</div>
             <h3>Financial Dashboard</h3>
@@ -90,18 +154,6 @@ export default function Dashboard() {
             <h3>Financial Planner</h3>
             <p>Create a detailed financial plan based on your goals</p>
           </Link>
-          
-          <Link to="/investments" className="action-card">
-            <div className="action-icon">💼</div>
-            <h3>Investment Recommendations</h3>
-            <p>AI-powered stock suggestions based on your risk profile</p>
-          </Link>
-          
-          <div className="action-card coming-soon">
-            <div className="action-icon">💳</div>
-            <h3>Expense Tracker</h3>
-            <p>Coming soon - Monitor your spending</p>
-          </div>
         </div>
       </div>
     </div>

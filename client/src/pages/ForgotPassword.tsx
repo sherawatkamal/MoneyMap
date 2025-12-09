@@ -1,3 +1,11 @@
+/* ForgotPassword.tsx
+
+Kamal Sherawat Virginia Tech August 22, 2025
+
+Password reset request page where users can request a password reset link via email.
+
+*/
+
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import AuthCard from '../components/AuthCard'

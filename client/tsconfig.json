@@ -1,3 +1,9 @@
+// tsconfig.json
+//
+// Kamal Sherawat Virginia Tech August 22, 2025
+//
+// TypeScript project configuration file that references application and node-specific configs.
+//
 {
   "files": [],
   "references": [

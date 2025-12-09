@@ -1,3 +1,12 @@
+/* FinancialVisualization.tsx
+
+JJ Feeney III Virginia Tech August 22, 2025
+
+Financial visualization dashboard page with charts including budget breakdown pie charts,
+emergency fund progress indicators, money growth projections, and risk tolerance sliders.
+
+*/
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -75,27 +84,31 @@ const MoneyGrowthChart: React.FC<MoneyGrowthChartProps> = ({ riskTolerance, mont
         </div>
       </div>
 
-      <div style={{ height: '300px', marginBottom: '1rem' }}>
+      <div style={{ height: '450px', marginBottom: '2rem' }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 20, right: 20, left: 20, bottom: 5 }}>
+          <BarChart data={chartData} margin={{ top: 30, right: 40, left: 40, bottom: 40 }}>
             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
             <XAxis 
               dataKey="year" 
-              tick={{ fontSize: 12, fill: 'var(--text-secondary)' }}
+              tick={{ fontSize: 13, fill: 'var(--text-secondary)' }}
               stroke="var(--text-secondary)"
+              label={{ value: 'Years', position: 'insideBottom', offset: -10, style: { fontSize: 14 } }}
             />
             <YAxis 
-              tick={{ fontSize: 12, fill: 'var(--text-secondary)' }}
+              tick={{ fontSize: 13, fill: 'var(--text-secondary)' }}
               stroke="var(--text-secondary)"
               tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+              label={{ value: 'Portfolio Value ($)', angle: -90, position: 'insideLeft', style: { fontSize: 14 } }}
+              width={70}
             />
             <Tooltip 
               contentStyle={{
                 backgroundColor: 'rgba(255, 255, 255, 0.95)',
                 border: `2px solid ${getRiskColor(riskTolerance)}`,
                 borderRadius: 'var(--radius-md)',
-                padding: '12px',
-                boxShadow: 'var(--shadow-lg)'
+                padding: '14px',
+                boxShadow: 'var(--shadow-lg)',
+                fontSize: '13px'
               }}
               formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`, 'Projected Value']}
             />
@@ -185,6 +198,31 @@ const MoneyGrowthChart: React.FC<MoneyGrowthChartProps> = ({ riskTolerance, mont
   );
 };
 
+// Helper function to convert risk_tolerance (string or number) to a number (1-10)
+const normalizeRiskTolerance = (risk: string | number | null | undefined): number => {
+  if (risk === null || risk === undefined) return 5; // Default
+  
+  // If it's already a number, return it (clamped to 1-10)
+  if (typeof risk === 'number') {
+    return Math.max(1, Math.min(10, risk));
+  }
+  
+  // If it's a string, try to parse it as a number first
+  const numValue = Number(risk);
+  if (!isNaN(numValue)) {
+    return Math.max(1, Math.min(10, numValue));
+  }
+  
+  // If it's a string category, convert to number
+  const riskLower = risk.toLowerCase();
+  if (riskLower === 'conservative') return 3;
+  if (riskLower === 'moderate') return 6;
+  if (riskLower === 'aggressive') return 9;
+  
+  // Default fallback
+  return 5;
+};
+
 const getRiskLabel = (risk: number): string => {
   if (risk <= 3) return 'Conservative';
   if (risk <= 7) return 'Moderate';
@@ -198,7 +236,7 @@ const getRiskColor = (risk: number): string => {
 };
 
 export default function FinancialVisualization() {
-  const { user, token } = useAuth();
+  const { user, token, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [financialData, setFinancialData] = useState<FinancialData>({
     currentSavings: 0,
@@ -219,6 +257,13 @@ export default function FinancialVisualization() {
     budget_entertainment_percent: null as number | null,
     budget_other_percent: null as number | null,
   });
+
+  // Update risk tolerance when user data changes
+  useEffect(() => {
+    if (user?.risk_tolerance !== undefined && user?.risk_tolerance !== null) {
+      setRiskTolerance(normalizeRiskTolerance(user.risk_tolerance));
+    }
+  }, [user?.risk_tolerance]);
 
   useEffect(() => {
     const fetchFinancialData = async () => {
@@ -272,9 +317,21 @@ export default function FinancialVisualization() {
           // Load saved risk tolerance
           if (user?.risk_tolerance) {
             const riskValue = user.risk_tolerance;
-            if (riskValue === 'conservative') setRiskTolerance(2);
-            else if (riskValue === 'moderate') setRiskTolerance(5);
-            else if (riskValue === 'aggressive') setRiskTolerance(9);
+            // Handle both number (1-10) and string ('conservative', 'moderate', 'aggressive')
+            if (typeof riskValue === 'number') {
+              setRiskTolerance(riskValue);
+            } else if (typeof riskValue === 'string') {
+              if (riskValue === 'conservative') setRiskTolerance(2);
+              else if (riskValue === 'moderate') setRiskTolerance(5);
+              else if (riskValue === 'aggressive') setRiskTolerance(9);
+              else {
+                // Try to parse as number if it's a string number
+                const parsed = parseInt(riskValue, 10);
+                if (!isNaN(parsed) && parsed >= 1 && parsed <= 10) {
+                  setRiskTolerance(parsed);
+                }
+              }
+            }
           }
         } catch (error) {
           console.error('Error fetching preferences:', error);
@@ -492,7 +549,7 @@ export default function FinancialVisualization() {
           <h3 style={{ textAlign: 'center', marginBottom: '2rem' }}>
             💸 Budget Breakdown
           </h3>
-          <div style={{ height: '400px', margin: '0 auto' }}>
+          <div style={{ height: '500px', margin: '0 auto' }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -501,12 +558,14 @@ export default function FinancialVisualization() {
                   cy="50%"
                   labelLine={false}
                   label={(entry: any) => `${entry.category}: ${entry.percentage.toFixed(1)}%`}
-                  outerRadius={100}
+                  outerRadius={140}
+                  innerRadius={50}
                   fill="#8884d8"
                   dataKey="percentage"
                   animationBegin={0}
                   animationDuration={800}
                   animationEasing="ease-out"
+                  paddingAngle={3}
                 >
                   {budgetBreakdown.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -518,14 +577,20 @@ export default function FinancialVisualization() {
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
                     border: '1px solid var(--border-color)',
                     borderRadius: 'var(--radius-md)',
-                    padding: '10px'
+                    padding: '12px',
+                    fontSize: '13px'
                   }}
+                />
+                <Legend 
+                  wrapperStyle={{ paddingTop: '30px' }}
+                  iconSize={16}
+                  iconType="circle"
                 />
               </PieChart>
             </ResponsiveContainer>
           </div>
           {/* Category Legend */}
-          <div style={{ marginTop: '2rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
+          <div style={{ marginTop: '2.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1.5rem' }}>
             {budgetBreakdown.map((item, index) => (
               <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: 'var(--radius-md)', background: 'rgba(0,0,0,0.02)' }}>
                 <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: item.color }}></div>
@@ -606,7 +671,7 @@ export default function FinancialVisualization() {
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Conservative (Low Risk)</span>
                 <span style={{ fontWeight: 600, fontSize: '1.2rem', color: getRiskColor(riskTolerance) }}>
-                  {getRiskLabel(riskTolerance)}
+                  {getRiskLabel(riskTolerance)} ({riskTolerance}/10)
                 </span>
                 <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Aggressive (High Risk)</span>
               </div>
@@ -642,7 +707,7 @@ export default function FinancialVisualization() {
               textAlign: 'center'
             }}>
               <h4 style={{ marginTop: 0, marginBottom: '0.5rem', color: getRiskColor(riskTolerance) }}>
-                Your Risk Profile: {getRiskLabel(riskTolerance)}
+                Your Risk Profile: {getRiskLabel(riskTolerance)} ({riskTolerance}/10)
               </h4>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1rem' }}>
                 {riskTolerance <= 3 && "You prefer stable, low-risk investments with predictable returns. Consider bonds and high-yield savings accounts."}

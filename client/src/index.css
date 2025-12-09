@@ -1,3 +1,12 @@
+/* index.css
+
+Kamal Sherawat Virginia Tech August 22, 2025
+
+Global CSS styles and CSS custom properties (variables) for consistent theming
+including color schemes, typography, spacing, shadows, and animations.
+
+*/
+
 /* CSS Variables for consistent theming - Money Green Theme */
 :root {
   --primary-color: #059669;

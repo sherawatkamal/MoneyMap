@@ -1,3 +1,12 @@
+/* App.css
+
+Kamal Sherawat, JJ Feeney III Virginia Tech August 22, 2025
+
+Application-wide CSS styles including component layouts, navigation, forms, cards,
+buttons, responsive design elements, and chart styling for the MoneyMap application.
+
+*/
+
 /* Modern App Styles */
 
 /* App Container */
@@ -879,6 +888,29 @@
   font-weight: 600;
 }
 
+/* When form-navigation contains divider (last step), stack vertically */
+.form-navigation:has(.divider) {
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-navigation:has(.divider) .btn-primary {
+  width: 100%;
+  flex: none;
+  margin: 0;
+}
+
+/* Ensure divider and Google button container are full width in form-navigation */
+.form-navigation .divider {
+  width: 100%;
+  margin: 0;
+}
+
+.form-navigation #google-signin-button-container {
+  width: 100%;
+  margin: 0;
+}
+
 /* Responsive adjustments for multi-step form */
 @media (max-width: 768px) {
   .form-grid {
@@ -907,6 +939,10 @@
   .form-navigation .btn-primary,
   .form-navigation .btn-secondary {
     width: 100%;
+  }
+  
+  .form-navigation:has(.divider) {
+    gap: 1rem;
   }
 }
 
@@ -952,6 +988,11 @@
   margin-top: 1rem;
   padding: 1rem 2rem;
   font-size: 1.1rem;
+}
+
+/* Override margin-top for buttons inside form-navigation */
+.form-navigation .btn-primary {
+  margin-top: 0;
 }
 
 .auth-switch {

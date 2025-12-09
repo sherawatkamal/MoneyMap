@@ -1,3 +1,12 @@
+/* RiskAssessment.tsx
+
+Kamal Sherawat Virginia Tech August 22, 2025
+
+Risk assessment questionnaire page with interactive questions to determine user's
+risk tolerance profile with scoring algorithm and results display.
+
+*/
+
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -71,7 +80,7 @@ const questions: Question[] = [
 ];
 
 export default function RiskAssessment() {
-  const { user, token } = useAuth();
+  const { user, token, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
@@ -109,6 +118,9 @@ export default function RiskAssessment() {
       });
 
       if (response.ok) {
+        // Refresh user data to get updated risk tolerance
+        await refreshUser();
+        
         setToastMessage(`Risk tolerance updated to ${riskTolerance}/10!`);
         setToastType('success');
         setShowToast(true);

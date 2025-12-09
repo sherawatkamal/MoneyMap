@@ -1,3 +1,12 @@
+/* App.tsx
+
+Kamal Sherawat Virginia Tech August 22, 2025
+
+Main React application component with routing configuration, authentication wrapper,
+and financial planner workflow components.
+
+*/
+
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';

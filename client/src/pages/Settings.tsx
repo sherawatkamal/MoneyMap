@@ -1,3 +1,12 @@
+/* Settings.tsx
+
+Kamal Sherawat Virginia Tech August 22, 2025
+
+User settings page for editing profile information, financial preferences,
+budget allocations, and emergency fund configurations.
+
+*/
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import Toast from '../components/Toast';

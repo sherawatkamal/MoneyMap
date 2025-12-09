@@ -1,3 +1,12 @@
+/* Toast.tsx
+
+Kamal Sherawat Virginia Tech August 22, 2025
+
+Toast notification component for displaying success, error, and info messages
+with auto-dismiss functionality and animations.
+
+*/
+
 import React, { useEffect, useState } from 'react';
 
 interface ToastProps {

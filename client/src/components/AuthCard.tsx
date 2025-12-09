@@ -1,3 +1,12 @@
+/* AuthCard.tsx
+
+Kamal Sherawat Virginia Tech August 22, 2025
+
+Reusable card component wrapper for authentication pages with consistent styling
+for title, subtitle, body content, and footer sections.
+
+*/
+
 import React from 'react'
 
 type AuthCardProps = {

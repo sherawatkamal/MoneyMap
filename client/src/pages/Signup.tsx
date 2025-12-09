@@ -1,3 +1,12 @@
+/* Signup.tsx
+
+Kamal Sherawat Virginia Tech August 22, 2025
+
+User registration page with multi-step form for collecting user profile information
+including financial data and Google OAuth integration.
+
+*/
+
 import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard'

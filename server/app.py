@@ -1,3 +1,10 @@
+# app.py
+#
+# Jason Albanus Virginia Tech August 22, 2025
+#
+# Main Flask application entry point. Configures CORS, JWT authentication, and registers authentication blueprint.
+#
+
 from flask import Flask, jsonify
 import flask
 from flask_cors import CORS

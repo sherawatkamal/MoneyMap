@@ -1,3 +1,12 @@
+/* AuthContext.tsx
+
+Kamal Sherawat Virginia Tech August 22, 2025
+
+Authentication context provider managing user session state, login/logout functionality,
+token storage, and user profile data across the application.
+
+*/
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 
@@ -20,6 +29,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   loginWithGoogle: (googleToken: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
   loading: boolean;
 }
@@ -207,6 +217,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const refreshUser = async (): Promise<void> => {
+    if (!token) return;
+    
+    try {
+      const profileResponse = await fetch('http://localhost:5001/profile', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (profileResponse.ok) {
+        const userData = await profileResponse.json();
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+      }
+    } catch (error) {
+      console.error('Error refreshing user profile:', error);
+    }
+  };
+
   const logout = async (): Promise<void> => {
     try {
       if (token) {
@@ -239,6 +271,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     loginWithGoogle,
     logout,
+    refreshUser,
     isAuthenticated,
     loading,
   };

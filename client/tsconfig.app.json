@@ -1,3 +1,9 @@
+// tsconfig.app.json
+//
+// Kamal Sherawat Virginia Tech August 22, 2025
+//
+// TypeScript compiler configuration for React application source files with strict type checking.
+//
 {
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",

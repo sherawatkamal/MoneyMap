@@ -1,3 +1,12 @@
+/* Navbar.tsx
+
+Kamal Sherawat Virginia Tech August 22, 2025
+
+Navigation bar component with responsive menu, user dropdown, and routing links
+to all major application pages.
+
+*/
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
